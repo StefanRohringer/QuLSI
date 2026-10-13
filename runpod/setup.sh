@@ -81,11 +81,18 @@ if [ ! -f "$VENV/.qulsi-ok" ] || [ $NEU = 1 ]; then
   touch "$VENV/.qulsi-ok"; GEAENDERT=1
 fi
 if ! skip ml && [ ! -f "$VENV/.ml-ok" ]; then
-  log "Bild- und Sprachmodelle (ultralytics, transformers, faster-whisper, piper)"
+  log "Bild- und Sprachmodelle (transformers, faster-whisper, piper)"
   "$VENV/bin/python" -c "import torch; print('torch', torch.__version__, 'CUDA', torch.cuda.is_available())" \
     || installieren "$VENV" torch torchvision --index-url https://download.pytorch.org/whl/cu128
   installieren "$VENV" -r "$APP/vision/requirements-ml.txt" -r "$APP/voice/requirements-ml.txt"
   touch "$VENV/.ml-ok"; GEAENDERT=1
+fi
+# YOLO-World nur auf Wunsch (DETECTOR=yolo-world in $ENV_FILE): ultralytics steht unter AGPL-3.0
+DETEKTOR=$(grep -E '^DETECTOR=' "$ENV_FILE" 2>/dev/null | tail -1 | cut -d= -f2 | cut -d'#' -f1 | tr -d ' ' || true)
+if ! skip ml && [ "${DETEKTOR:-owlv2}" = yolo-world ] && [ ! -f "$VENV/.yolo-ok" ]; then
+  log "YOLO-World (ultralytics, AGPL-3.0), weil DETECTOR=yolo-world"
+  installieren "$VENV" -r "$APP/vision/requirements-yolo.txt"
+  touch "$VENV/.yolo-ok"; GEAENDERT=1
 fi
 [ $GEAENDERT = 1 ] && einpacken "$VENV"
 

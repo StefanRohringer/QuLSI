@@ -22,7 +22,11 @@ DEVICE = os.environ.get("DEVICE", "cuda")
 
 class YoloWorldDetector:
     def __init__(self, vokabular: list[str]):
-        from ultralytics import YOLOWorld
+        try:
+            from ultralytics import YOLOWorld
+        except ImportError as e:  # wird nur bei DETECTOR=yolo-world installiert (AGPL-3.0)
+            raise RuntimeError("YOLO-World braucht ultralytics: Image bzw. Umgebung mit DETECTOR=yolo-world bauen "
+                               "(vision/requirements-yolo.txt), oder DETECTOR=owlv2 verwenden") from e
 
         self.model = YOLOWorld(os.environ.get("YOLO_WORLD_MODEL", "yolov8s-worldv2.pt"))
         self.model.set_classes(vokabular)

@@ -191,7 +191,10 @@ services:
 
   vision:
     profiles: [box]
-    build: vision
+    build:
+      context: vision
+      args:
+        DETECTOR: ${DETECTOR:-owlv2}   # yolo-world installiert zusätzlich ultralytics (AGPL-3.0)
     image: qulsi-vision
     restart: *restart
     <<: [*hart, *gpu]

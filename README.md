@@ -441,10 +441,15 @@ MIT, siehe [LICENSE](LICENSE). Das gilt für den Code in diesem Repo. Die Bauste
 
 | Baustein | Lizenz |
 |---|---|
-| FastAPI, uvicorn, httpx, mcp, LiteLLM, pyrage, smbprotocol, faster-whisper, Piper, Chatterbox | MIT bzw. BSD |
-| Bonsai-27B (PrismML), Qwen3-1.7B, Qwen3-Embedding, Qwen3-TTS, transformers, OWLv2, SigLIP, Qdrant, Home Assistant, ntfy, openWakeWord | Apache-2.0 |
+| FastAPI, uvicorn, httpx, mcp, LiteLLM, pyrage, smbprotocol, faster-whisper, Chatterbox, Pillow, pypdf, icalendar | MIT bzw. BSD |
+| Bonsai-27B (PrismML), Qwen3-1.7B, Qwen3-Embedding, Qwen3-TTS, Fun-CosyVoice3, transformers, OWLv2, SigLIP, OpenCV, cryptography, Qdrant, Home Assistant, ntfy, openWakeWord (Code) | Apache-2.0 |
 | psycopg, recurring-ical-events | LGPL (als Bibliothek genutzt, unverändert) |
-| PostgreSQL, Mosquitto, Tailscale, Open WebUI, SearXNG | eigene freie Lizenzen, laufen als getrennte Dienste |
-| ultralytics (YOLO-World, nur bei `DETECTOR=yolo-world`) | **AGPL-3.0**: Wer QuLSI mit YOLO-World weitergibt oder als Dienst anbietet, muss die AGPL beachten. Mit `DETECTOR=owlv2` ist nichts davon betroffen. |
+| paho-mqtt | EPL-2.0 oder BSD-3-Clause |
+| Piper (`piper-tts` ab 1.3, Projekt `piper1-gpl`) | **GPL-3.0-or-later**: Der Voice-Dienst bindet Piper als Bibliothek ein. Der Code hier bleibt MIT, aber wer das fertig gebaute Voice-Image weitergibt, muss die GPL beachten. |
+| openWakeWord, vortrainierte Wake-Word-Modelle (z. B. `ok_nabu`) | **CC BY-NC-SA 4.0**: nur nicht kommerziell. Für den kommerziellen Einsatz ein eigenes Wake-Word trainieren (`data/wakeword`). |
+| SearXNG | AGPL-3.0, läuft unverändert als getrennter Dienst |
+| Open WebUI | Open WebUI License (BSD-3 mit Branding-Klausel ab Version 0.6.6: das Open-WebUI-Logo darf nur bis 50 Nutzer entfernt werden), läuft unverändert als getrennter Dienst |
+| PostgreSQL, Mosquitto, Tailscale | eigene freie Lizenzen, laufen als getrennte Dienste |
+| ultralytics (YOLO-World, nur bei `DETECTOR=yolo-world`) | **AGPL-3.0**: Wer QuLSI mit YOLO-World weitergibt oder als Dienst anbietet, muss die AGPL beachten. Mit dem Standard `DETECTOR=owlv2` wird ultralytics gar nicht installiert (eigene Datei `vision/requirements-yolo.txt`). |
 
 Modelle und Container-Images liegen nicht in diesem Repo, sie werden beim Einrichten geladen.

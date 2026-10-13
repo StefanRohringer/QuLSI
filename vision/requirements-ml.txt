@@ -1,5 +1,3 @@
-# Modelle für Erkennung und Bildvektoren. torch kommt je nach Variante aus dem CUDA- oder CPU-Index.
-ultralytics==8.4.174
+# Modelle für Erkennung und Bildvektoren (OWLv2, SigLIP). torch kommt je nach Variante aus dem CUDA- oder CPU-Index.
+# YOLO-World (ultralytics, AGPL-3.0) steht getrennt in requirements-yolo.txt und wird nur bei DETECTOR=yolo-world installiert.
 transformers==5.19.0
-# YOLO-World braucht den CLIP-Textencoder
-git+https://github.com/ultralytics/CLIP.git

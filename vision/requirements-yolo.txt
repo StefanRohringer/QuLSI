@@ -1,0 +1,5 @@
+# Nur für DETECTOR=yolo-world. ultralytics steht unter AGPL-3.0: Wer ein Image mit YOLO-World weitergibt
+# oder als Dienst anbietet, muss die AGPL beachten. Mit dem Standard DETECTOR=owlv2 wird diese Datei nicht installiert.
+ultralytics==8.4.174
+# YOLO-World braucht den CLIP-Textencoder
+git+https://github.com/ultralytics/CLIP.git
