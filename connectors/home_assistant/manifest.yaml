@@ -1,0 +1,23 @@
+name: home_assistant
+titel: Home Assistant
+url: http://connector-home-assistant:8000/mcp
+dienst: connector-home-assistant
+
+capabilities:
+  - home.get_state
+  - home.set_state
+  - door.unlock
+
+network:
+  allowed:
+    - ${HA_URL}          # nur die eigene Home-Assistant-Instanz im Heimnetz
+
+permissions:
+  get_state: low
+  set_state: medium
+  door.unlock: high
+
+untrusted: false
+offline: true            # läuft im Heimnetz, braucht kein Internet
+
+secrets: [HA_TOKEN]

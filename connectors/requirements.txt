@@ -1,0 +1,7 @@
+mcp==2.2.0
+httpx==0.28.1
+psycopg[binary]==3.3.6
+icalendar==7.3.0
+recurring-ical-events==3.8.2
+pypdf==6.19.0
+smbprotocol==1.17.0

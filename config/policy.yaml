@@ -1,0 +1,48 @@
+# Globale Regeln der Policy Engine.
+#
+# Die Stufen der einzelnen Werkzeuge stehen in den Connector-Manifesten
+# (connectors/*/manifest.yaml) bzw. bei den Kern-Werkzeugen im Code.
+# Hier kannst du sie überschreiben, z. B. strenger machen. Mögliche Werte:
+#   low     frei, wird protokolliert
+#   medium  frei bei direkter Anfrage, mit Freigabe wenn das Gespräch belastet ist
+#   high    immer Freigabe in der Handy-App, nie per Stimme
+#   deny    Werkzeug ist gesperrt und für das Modell unsichtbar
+# Unbekannte Werkzeuge gelten als high.
+
+stufen:
+  # Beispiele:
+  # home.set_state: high
+  # browser.search: deny
+
+# Werkzeuge, deren Ergebnis fremden Text ins Gespräch bringt, zusätzlich zu den
+# Connectoren mit "untrusted: true" im Manifest.
+belastend: []
+
+# Was gilt, wenn fremder Text (Mail, Web, Dateien) im Gespräch steht:
+belastet:
+  medium: bestaetigung   # bestaetigung | verboten | erlaubt
+  high: verboten         # verboten | bestaetigung
+
+# Hintergrund-Agents (config/agenten.yaml) handeln ohne direkte Anfrage.
+# medium ist für sie nur frei, wenn der Agent die Fähigkeit unter "selbststaendig" hat.
+automatik:
+  medium: bestaetigung   # bestaetigung | verboten
+
+bestaetigung:
+  gueltig_sekunden: 300
+
+# Rate-Limits: höchstens so viele Aufrufe je Werkzeug pro Stunde (auch Freigabe-Anfragen zählen).
+# Darüber lehnt die Policy Engine ab, das steht dann im Protokoll (Tabelle audit_log).
+limits:
+  stunde:
+    low: 600
+    medium: 60
+    high: 10
+  # einzelne Werkzeuge, z. B.:
+  # email.send: 20
+
+# Modus je Connector: an | nur_lesen (nur Werkzeuge der Stufe low) | aus.
+# In der App unter "Connectoren" umschaltbar; das überschreibt diese Voreinstellung.
+connectoren:
+  # mail: nur_lesen
+  # browser: aus

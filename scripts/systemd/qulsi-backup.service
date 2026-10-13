@@ -1,0 +1,9 @@
+[Unit]
+Description=QuLSI Backup (restic)
+After=docker.service
+
+[Service]
+Type=oneshot
+# Pfad anpassen
+WorkingDirectory=/opt/qulsi
+ExecStart=/opt/qulsi/scripts/backup.sh

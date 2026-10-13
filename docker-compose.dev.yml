@@ -1,0 +1,62 @@
+# Entwicklungs- und Testbetrieb ohne GPU, Kameras und Bonsai.
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+#
+# - fake-llm ersetzt Bonsai, das kleine Modell und das Embedding-Modell (feste Regeln statt KI)
+# - vision läuft ohne neuronale Netze: Erkennungen aus config/dev/static_detections.json,
+#   Bildvektoren per Farbhistogramm, Kameras sind Bilddateien aus config/dev/
+# - voice nutzt Fake-Provider: das "Audio" ist der Text selbst; die Antwort kommt als Piepton
+#   vom TTS-Dienst (MODELL=fake), Ersatz bei Ausfall ist ebenfalls ein Piepton
+services:
+  fake-llm:
+    build: runtime/fake-llm
+    image: qulsi-fake-llm
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    networks: [zone-ai]
+
+  litellm:
+    environment:
+      BONSAI_URL: http://fake-llm:8080/v1
+      KLEIN_URL: http://fake-llm:8080/v1
+      EMBED_URL: http://fake-llm:8080/v1
+
+  vision:
+    profiles: !reset []
+    build:
+      context: vision
+      args:
+        WITH_ML: "false"
+    deploy: !reset {}
+    environment:
+      DETECTOR: statisch
+      EMBEDDER: histogramm
+      DEVICE: cpu
+      BLE: "false"
+      DAUERBETRIEB: "false"
+      DETECTOR_STATIC_FILE: /config/dev/static_detections.json
+      KAMERA_KUECHE_URL: /config/dev/kueche.jpg
+      KAMERA_FLUR_URL: /config/dev/flur.jpg
+    volumes:
+      - ./config/dev:/config/dev:ro
+
+  voice:
+    profiles: !reset []
+    build:
+      context: voice
+      args:
+        WITH_ML: "false"
+    deploy: !reset {}
+    environment:
+      STT_PROVIDER: fake
+      TTS_PROVIDER: openai
+      TTS_MODEL: fake
+      TTS_ERSATZ: fake
+  tts:
+    profiles: !reset []
+    build:
+      context: tts
+      args:
+        MODELL: fake
+    image: qulsi-tts-fake
+    deploy: !reset {}

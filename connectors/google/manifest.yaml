@@ -1,0 +1,58 @@
+name: google
+titel: Google (Kalender, Gmail, Drive)
+url: http://connector-google:8000/mcp
+dienst: connector-google
+
+capabilities:
+  - google.calendar.sync
+  - google.calendar.create
+  - google.mail.search
+  - google.mail.read
+  - google.mail.draft
+  - google.mail.send
+  - google.drive.search
+  - google.drive.read
+
+# Nur die API-Endpunkte. accounts.google.com braucht nur dein Browser beim Anmelden, nicht die Box.
+network:
+  allowed_domains: [oauth2.googleapis.com, www.googleapis.com, gmail.googleapis.com]
+  allowed_ports: [443]
+
+permissions:
+  calendar.sync: low
+  calendar.create: medium
+  mail.search: low
+  mail.read: low
+  mail.draft: medium
+  mail.send: high
+  drive.search: low
+  drive.read: low
+  # ausdrücklich verboten, egal was der Server anbietet
+  mail.delete: false
+  drive.write: false
+  drive.delete: false
+  calendar.delete: false
+
+# Mails und Dateien sind fremder Text: danach gilt das Gespräch als belastet.
+untrusted: [google.mail.search, google.mail.read, google.drive.search, google.drive.read]
+# Termine liegen im lokalen Cache (calendar.search), alles hier braucht Internet.
+offline: false
+
+vorschau:
+  google.mail.send: google_mail_vorschau
+
+# Refresh-Token und Client-Secret bleiben im Tresor, der Connector bekommt kurzlebige Tokens
+konto:
+  token_url: https://oauth2.googleapis.com/token
+  client_id: GOOGLE_CLIENT_ID          # .env oder Tresor (in der App unter Konten einstellbar)
+  client_secret: GOOGLE_CLIENT_SECRET
+  # Anmelden in der App: Link im Browser öffnen, danach die Adresse von 127.0.0.1 einfügen (PKCE)
+  anmeldung: link
+  auth_url: https://accounts.google.com/o/oauth2/v2/auth
+  redirect_uri: http://127.0.0.1:8765/
+  scopes: >-
+    https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/calendar.events
+    https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.compose
+    https://www.googleapis.com/auth/drive.readonly
+
+limits: {anfragen_pro_minute: 120, mb_pro_minute: 50}

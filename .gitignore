@@ -1,0 +1,12 @@
+.env
+data/
+models/
+__pycache__/
+*.pyc
+.pytest_cache/
+scripts/restic.env
+config/signatur.pub
+connectors/SIGNATUR.json
+config/stimme/stimme.*
+config/stimme/ausstehend/
+.pytest_cache/

@@ -1,0 +1,3307 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icon.svg">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="QuLSI">
+<title>QuLSI</title>
+<style>
+:root{
+  --bg:#000;--flaeche:#0c0c0d;--flaeche2:#141416;--flaeche3:#1c1c1f;--linie:rgba(255,255,255,.08);--linie2:rgba(255,255,255,.14);
+  --text:#f5f5f7;--zweit:#a1a1a6;--leise:#6e6e73;--weiss:#fff;--gut:#4cd38a;--warn:#ffb340;--rot:#ff5f57;
+  --r:18px;--r-s:12px;--seite:16px;--tab:64px;
+  --oben:env(safe-area-inset-top);--unten:env(safe-area-inset-bottom);
+  --schrift:-apple-system,BlinkMacSystemFont,"SF Pro Text","Inter","Segoe UI",system-ui,sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);font:16px/1.45 var(--schrift);-webkit-font-smoothing:antialiased}
+body{min-height:100dvh;overflow-x:hidden}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none;padding:0}
+a{color:inherit;text-decoration:none}
+svg.i{width:22px;height:22px;flex:none;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+[hidden]{display:none!important}
+
+/* ---------- Grundgerüst: Seitenleiste (Laptop) / Tab-Leiste (iPhone) */
+.app{display:flex;min-height:100dvh}
+nav.seite{display:none}
+.inhalt{flex:1;min-width:0;padding:calc(var(--oben) + 8px) var(--seite) calc(var(--tab) + var(--unten) + 24px)}
+.spalte{max-width:760px;margin:0 auto}
+header.kopf{display:flex;align-items:center;justify-content:space-between;height:44px;margin-bottom:6px}
+.marke{height:13px;width:auto;color:var(--text);display:block}
+.status{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:var(--zweit);padding:6px 10px;border-radius:99px;background:var(--flaeche2);border:1px solid var(--linie)}
+.status i{width:7px;height:7px;border-radius:50%;background:var(--leise)}
+.status.online i{background:var(--gut);box-shadow:0 0 0 3px rgba(76,211,138,.15)}
+.status.offline i{background:var(--warn)}
+
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;justify-content:space-around;
+  padding:6px 6px calc(6px + var(--unten));background:rgba(10,10,11,.78);backdrop-filter:saturate(180%) blur(20px);
+  -webkit-backdrop-filter:saturate(180%) blur(20px);border-top:1px solid var(--linie)}
+nav.tabs a{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0 2px;font-size:10.5px;color:var(--leise);letter-spacing:.01em;transition:color .2s}
+nav.tabs a.aktiv{color:var(--weiss)}
+nav.tabs a .punkt{position:relative}
+nav.tabs a .zahl{position:absolute;top:-4px;right:-9px;min-width:16px;height:16px;padding:0 4px;border-radius:9px;background:var(--weiss);color:#000;font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center}
+
+@media (min-width:960px){
+  nav.tabs{display:none}
+  nav.seite{display:flex;flex-direction:column;position:sticky;top:0;height:100dvh;width:260px;flex:none;padding:28px 16px 20px;border-right:1px solid var(--linie);background:#050505}
+  nav.seite .marke{height:15px;margin:0 10px}
+  nav.seite .claim{margin:10px 10px 34px;font-size:8.5px;letter-spacing:.2em;color:var(--leise);text-transform:uppercase;white-space:nowrap}
+  nav.seite a{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;color:var(--zweit);font-size:15px;margin-bottom:2px;transition:background .15s,color .15s}
+  nav.seite a:hover{background:var(--flaeche2);color:var(--text)}
+  nav.seite a.aktiv{background:var(--flaeche3);color:var(--weiss)}
+  nav.seite a .zahl{margin-left:auto;font-size:12px;background:var(--weiss);color:#000;border-radius:9px;padding:0 7px;font-weight:600}
+  nav.seite .fuss{margin-top:auto;padding:0 10px}
+  header.kopf .marke{display:none}
+  header.kopf{display:none}
+  .inhalt{padding:28px 40px 48px}
+}
+
+/* ---------- Typografie und Karten */
+h1.titel{font-size:34px;line-height:1.1;font-weight:700;letter-spacing:-.02em;margin:10px 0 4px}
+.unter{color:var(--zweit);margin:0 0 22px;font-size:15px}
+h2.abschnitt{font-size:11px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--leise);margin:28px 4px 10px}
+.karte{background:var(--flaeche);border:1px solid var(--linie);border-radius:var(--r);padding:16px 18px;margin-bottom:12px}
+.karte h3{margin:0 0 10px;font-size:13px;font-weight:600;color:var(--zweit);display:flex;align-items:center;gap:8px}
+.karte h3 .mehr{margin-left:auto;font-weight:500;color:var(--leise);font-size:12px}
+.raster{display:grid;gap:12px;grid-template-columns:1fr}
+@media (min-width:700px){.raster{grid-template-columns:1fr 1fr}.raster .breit{grid-column:1/-1}}
+.raster .karte{margin:0}
+ul.liste{list-style:none;margin:0;padding:0}
+ul.liste li{display:flex;gap:12px;padding:9px 0;border-top:1px solid var(--linie);align-items:baseline}
+ul.liste li:first-child{border-top:0;padding-top:2px}
+.zeit{color:var(--leise);font-variant-numeric:tabular-nums;font-size:14px;min-width:44px}
+.klein{font-size:13px;color:var(--leise)}
+.leer{color:var(--leise);font-size:14px}
+.warn{color:var(--warn)}.gut{color:var(--gut)}.rot{color:var(--rot)}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;padding:3px 9px;border-radius:99px;background:var(--flaeche3);color:var(--zweit);border:1px solid var(--linie)}
+.chip.warn{color:var(--warn);border-color:rgba(255,179,64,.3)}
+.chip.gut{color:var(--gut);border-color:rgba(76,211,138,.3)}
+
+/* Frage-Feld auf "Heute" */
+.frage{display:flex;align-items:center;gap:10px;width:100%;padding:14px 16px;border-radius:var(--r);background:var(--flaeche2);border:1px solid var(--linie);color:var(--leise);font-size:16px;margin-bottom:22px;text-align:left}
+.frage svg{color:var(--zweit)}
+
+/* ---------- Gespräch */
+.chat{display:flex;flex-direction:column;min-height:calc(100dvh - 210px)}
+#verlauf{flex:1;display:flex;flex-direction:column;gap:10px;padding-bottom:12px}
+.msg{max-width:84%;padding:10px 14px;border-radius:20px;white-space:pre-wrap;word-wrap:break-word;font-size:16px;animation:rein .25s ease}
+.msg.ich{align-self:flex-end;background:var(--weiss);color:#000;border-bottom-right-radius:6px}
+.msg.qulsi{align-self:flex-start;background:var(--flaeche2);border:1px solid var(--linie);border-bottom-left-radius:6px}
+.msg .meta{font-size:11.5px;color:var(--leise);margin-top:6px;white-space:normal}
+.msg details.meta summary{list-style:none;cursor:pointer;opacity:.6;display:inline}
+.msg details.meta summary::-webkit-details-marker{display:none}
+.msg details.meta[open] summary{margin-right:6px}
+.msg details.meta[open] summary::after{content:":"}
+.hinweis-zeile{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--warn);padding:6px 10px;margin-bottom:10px;border-radius:10px;background:rgba(255,179,64,.08)}
+.hinweis-zeile svg{width:15px;height:15px;flex:none}
+.hinweis-zeile span{flex:1}
+.hinweis-zeile button{color:var(--zweit);font-size:18px;line-height:1;padding:0 4px}
+.freigabe .satz{margin-top:6px;font-size:15px;line-height:1.4}
+.msg.qulsi{white-space:normal}
+.msg.qulsi p{margin:0 0 .6em}.msg.qulsi p:last-of-type{margin-bottom:0}
+.msg.qulsi ul,.msg.qulsi ol{margin:.2em 0 .6em;padding-left:1.3em}
+.msg.qulsi li{margin:.15em 0}
+.msg.qulsi h4{font-size:15px;font-weight:600;margin:.8em 0 .3em}.msg.qulsi h4:first-child{margin-top:0}
+.msg.qulsi code{font:13.5px ui-monospace,SFMono-Regular,Menlo,monospace;background:rgba(255,255,255,.08);padding:1px 5px;border-radius:5px}
+.msg.qulsi pre{margin:.4em 0 .6em;padding:10px 12px;border-radius:10px;background:#000;border:1px solid var(--linie);overflow:auto;white-space:pre}
+.msg.qulsi pre code{background:none;padding:0}
+.msg.qulsi a{text-decoration:underline;text-underline-offset:2px}
+.msg.qulsi strong{font-weight:600;color:var(--weiss)}
+.tippt span{display:inline-block;width:6px;height:6px;margin:0 2px;border-radius:50%;background:var(--zweit);animation:tipp 1.2s infinite}
+.tippt span:nth-child(2){animation-delay:.15s}.tippt span:nth-child(3){animation-delay:.3s}
+@keyframes tipp{0%,60%,100%{opacity:.25;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
+@keyframes rein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.vorschlaege{display:flex;flex-wrap:wrap;gap:8px;margin:auto 0 16px}
+.vorschlaege button{padding:9px 14px;border-radius:99px;background:var(--flaeche2);border:1px solid var(--linie);color:var(--zweit);font-size:14px}
+.leerchat{margin:auto 0 18px;text-align:center;color:var(--leise)}
+.leerchat .marke{height:11px;margin:0 auto 12px;color:var(--zweit)}
+form.eingabe{position:sticky;bottom:calc(var(--tab) + var(--unten) + 10px);display:flex;gap:8px;align-items:flex-end;padding:6px;border-radius:26px;background:rgba(20,20,22,.9);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid var(--linie2)}
+@media (min-width:960px){form.eingabe{bottom:20px}.chat{min-height:calc(100dvh - 130px)}}
+form.eingabe{flex-wrap:wrap}
+form.eingabe .anhaenge{flex:1 1 100%;display:flex;gap:8px;overflow-x:auto;padding:4px 4px 2px}
+form.eingabe .anhaenge:empty{display:none}
+.anhang{position:relative;flex:none;display:flex;align-items:center;gap:8px;height:56px;max-width:220px;padding:0 30px 0 8px;border-radius:14px;background:var(--flaeche2,#1c1c1f);border:1px solid var(--linie2);font-size:13px}
+.anhang img{width:42px;height:42px;object-fit:cover;border-radius:9px}
+.anhang .name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.anhang .balken{position:absolute;left:8px;right:8px;bottom:5px;height:3px;border-radius:2px;background:var(--linie2);overflow:hidden}
+.anhang .balken i{display:block;height:100%;background:var(--weiss);transition:width .2s}
+.anhang.fehler{border-color:var(--rot);color:var(--rot)}
+.anhang button{position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;border:0;background:rgba(255,255,255,.12);color:inherit;font-size:14px;line-height:22px;padding:0;cursor:pointer}
+.msg .bilder{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px;justify-content:flex-end}
+.msg .bilder img{width:120px;height:120px;object-fit:cover;border-radius:14px}
+.msg .dateichip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:12px;background:rgba(0,0,0,.08);font-size:14px;margin:0 0 6px 6px}
+.msg .dateichip .i{width:16px;height:16px}
+.chat.ziehen form.eingabe,.ablage.ziehen{outline:2px dashed var(--weiss);outline-offset:3px}
+.ablage{display:flex;flex-direction:column;align-items:center;gap:12px;padding:22px 16px;text-align:center;border:1px dashed var(--linie2);border-radius:var(--r);margin-bottom:12px}
+.ablage .reihe{justify-content:center}
+.hoch-liste .zeile img{width:44px;height:44px;object-fit:cover;border-radius:10px;flex:none}
+.hoch-liste .zeile .sym{flex:none}
+#anhang-menue{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center}
+#anhang-menue .innen{width:min(520px,100%);margin:0 10px calc(var(--unten,0px) + 14px);display:flex;flex-direction:column;gap:8px}
+#anhang-menue button{display:flex;align-items:center;gap:12px;padding:16px;border-radius:16px;border:0;background:#1c1c1f;color:inherit;font-size:17px;cursor:pointer}
+form.eingabe textarea{flex:1;min-width:0;resize:none;background:none;border:0;outline:none;padding:10px 6px 10px 12px;max-height:140px;font-size:16px;line-height:1.35}
+.rund{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none;color:var(--zweit);transition:background .15s}
+.rund:hover{background:var(--flaeche3)}
+.rund.senden{background:var(--weiss);color:#000}
+.rund.senden:disabled{opacity:.3}
+.rund.an{background:var(--rot);color:#fff;animation:puls 1.4s infinite}
+@keyframes puls{0%{box-shadow:0 0 0 0 rgba(255,95,87,.5)}100%{box-shadow:0 0 0 14px rgba(255,95,87,0)}}
+
+/* ---------- Einstellungen: gruppierte Listen */
+.gruppe{background:var(--flaeche);border:1px solid var(--linie);border-radius:var(--r);overflow:hidden;margin-bottom:10px}
+.zeile{display:flex;align-items:center;gap:14px;padding:13px 16px;min-height:52px;border-top:1px solid var(--linie);width:100%;text-align:left}
+.gruppe>.zeile:first-child,.gruppe>:first-child .zeile{border-top:0}
+a.zeile:hover,button.zeile:hover{background:var(--flaeche2)}
+.zeile .sym{width:32px;height:32px;border-radius:9px;background:var(--flaeche3);display:flex;align-items:center;justify-content:center;color:var(--text);flex:none}
+.zeile .sym svg{width:18px;height:18px}
+.zeile .txt{flex:1;min-width:0}
+.zeile.spalte{flex-direction:column;align-items:stretch;gap:10px}
+.zeile.spalte .txt{flex:none}
+.zeile.spalte>input,.zeile.spalte>select{width:100%;max-width:none;display:block}
+.zeile .txt b{display:block;font-weight:500;font-size:15.5px}
+.zeile .txt small{display:block;color:var(--leise);font-size:13px;margin-top:1px}
+.zeile .wert{color:var(--leise);font-size:14px;white-space:nowrap;max-width:45%;overflow:hidden;text-overflow:ellipsis}
+.zeile .pfeil{color:var(--leise);width:16px;height:16px}
+.zurueck{display:inline-flex;align-items:center;gap:4px;color:var(--zweit);font-size:15px;margin:6px 0 0 -4px;padding:6px 4px}
+.hinweis{font-size:13px;color:var(--leise);margin:8px 6px 0;line-height:1.5}
+.hinweis code,.befehl code{font:12.5px ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--zweit)}
+.befehl{display:flex;align-items:center;gap:8px;margin-top:8px;padding:8px 10px;border-radius:10px;background:#000;border:1px solid var(--linie);overflow:auto}
+.befehl code{white-space:nowrap;flex:1}
+.geaendert{font-size:12px;color:var(--warn);cursor:pointer}
+
+/* Bedienelemente */
+.schalter{position:relative;width:51px;height:31px;flex:none}
+.schalter input{position:absolute;opacity:0;width:100%;height:100%;margin:0;cursor:pointer;z-index:1}
+.schalter span{position:absolute;inset:0;border-radius:99px;background:#39393d;transition:background .2s}
+.schalter span::after{content:"";position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.4);transition:transform .22s cubic-bezier(.3,.7,.4,1)}
+.schalter input:checked+span{background:var(--gut)}
+.schalter input:checked+span::after{transform:translateX(20px)}
+details.bereich>summary{list-style:none;cursor:pointer;border-top:0}
+details.bereich>summary::-webkit-details-marker{display:none}
+details.bereich>summary:hover{background:var(--flaeche2)}
+details.bereich>summary .auf{width:16px;height:16px;color:var(--zweit);transition:transform .2s;flex:none}
+details.bereich[open]>summary .auf{transform:rotate(90deg)}
+details.bereich[open]>summary{border-bottom:1px solid var(--linie)}
+details.bereich>.zeile:nth-child(2){border-top:0}
+.technik{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;color:var(--leise)}
+input.feld[type=number]{width:84px;text-align:right}
+.schritte{margin:0;padding-left:20px;display:grid;gap:8px;font-size:14.5px;line-height:1.45;color:var(--text)}
+.schritte a{color:var(--weiss);text-decoration:underline;text-underline-offset:2px}
+.qr{margin-top:16px;display:flex;flex-direction:column;align-items:center;gap:8px}
+.qr svg{width:220px;height:220px;border-radius:12px}
+.warnung-rot{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;margin-bottom:10px;border-radius:12px;background:rgba(255,95,87,.12);border:1px solid rgba(255,95,87,.45);color:#ffb3ae;font-size:14px;line-height:1.4;white-space:normal}
+.warnung-rot svg{width:18px;height:18px;flex:none;color:var(--rot);margin-top:1px}
+.warnung-rot span{flex:1}
+.warnung-rot button{color:#ffb3ae;font-size:20px;line-height:1;padding:0 2px}
+#warnungen-live{position:fixed;top:calc(env(safe-area-inset-top) + 10px);left:12px;right:12px;z-index:60;display:grid;gap:8px;max-width:640px;margin:0 auto}
+.warnung-rot.schwebend{margin:0;background:#2a1110;box-shadow:0 8px 30px rgba(0,0,0,.5)}
+.chat-freigabe{border-color:rgba(255,179,64,.35);margin:6px 0 12px}
+.legende{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;margin:0 6px 12px;font-size:13px;color:var(--zweit)}
+.legende b{color:var(--text);font-weight:600;margin-right:4px}
+.segment{display:inline-flex;padding:2px;border-radius:10px;background:var(--flaeche3);gap:2px;flex:none}
+.segment button{padding:6px 11px;border-radius:8px;font-size:13px;color:var(--zweit);white-space:nowrap}
+.segment button.an{background:#3a3a3e;color:var(--weiss);box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.segment button:disabled{opacity:.3;cursor:not-allowed}
+select.wahl,input.feld,textarea.feld{background:var(--flaeche3);color:var(--text);border:1px solid var(--linie);border-radius:10px;padding:8px 10px;font-size:14px;outline:none;max-width:200px}
+input.feld{width:110px;text-align:right}
+input.feld.breit{width:100%;max-width:none;text-align:left}
+select.wahl:focus,input.feld:focus{border-color:var(--linie2)}
+.knopf{color:var(--text);display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 16px;border-radius:12px;background:var(--flaeche3);border:1px solid var(--linie);font-size:14px;font-weight:500;white-space:nowrap}
+.knopf:hover{background:#26262a}
+.knopf.hell{background:var(--weiss);color:#000;border-color:var(--weiss)}
+.knopf.klein{padding:6px 12px;font-size:13px;border-radius:10px}
+.knopf:disabled{opacity:.5}
+.reihe{display:flex;gap:8px;flex-wrap:wrap}
+.geaendert{display:block;width:fit-content;margin:3px 0 0;font-weight:400}
+.zeile .txt small.wert-mobil{display:none}
+.uebersicht small.wert-mobil{color:var(--zweit)}
+@media (max-width:600px){
+  .zeile.stapel{flex-wrap:wrap;row-gap:10px}
+  .zeile.stapel .txt{flex:1 1 calc(100% - 46px)}
+  .zeile.stapel>.segment,.zeile.stapel>select.wahl{width:100%;max-width:none;display:flex}
+  .zeile.stapel .sym~.segment{margin-left:46px;width:calc(100% - 46px)}
+  .zeile.stapel .segment button{flex:1;padding:8px 6px}
+  .uebersicht .wert{display:none}.uebersicht .zeile .txt small.wert-mobil{display:block}
+}
+
+.banner{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border-radius:var(--r);margin-bottom:12px;font-size:14px;line-height:1.45}
+.banner svg{flex:none;margin-top:1px}
+.banner b{display:block;font-size:15px;margin-bottom:2px}
+.banner.rot{background:rgba(255,95,87,.12);border:1px solid rgba(255,95,87,.45);color:#ffb4ae}
+.banner.rot b{color:var(--rot)}
+.banner.gelb{background:rgba(255,179,64,.10);border:1px solid rgba(255,179,64,.4);color:#ffd59a}
+.banner.gelb b{color:var(--warn)}
+.freigabe{padding:14px 0;border-top:1px solid var(--linie)}
+.freigabe:first-of-type{border-top:0;padding-top:4px}
+.freigabe .kopfzeile{display:flex;align-items:baseline;gap:10px}
+.freigabe .kopfzeile b{font-weight:600;font-size:16px;flex:1}
+.vorschau{margin:10px 0 0;padding:10px 12px;border-radius:12px;background:#000;border:1px solid var(--linie);font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--zweit);white-space:pre-wrap;word-break:break-word;max-height:220px;overflow:auto}
+.freigabe .knoepfe{display:flex;gap:8px;margin-top:12px}
+.freigabe .knoepfe .knopf{flex:1}
+.knopf.rot-umriss{color:var(--rot);border-color:rgba(255,95,87,.35)}
+.gespraech-kopf{display:flex;align-items:center;gap:10px;margin:4px 0 14px}
+.gespraech-kopf b{font-size:22px;font-weight:700;letter-spacing:-.01em;flex:1}
+/* Blatt (PIN, Bestätigung) */
+#blatt{position:fixed;inset:0;z-index:50;display:flex;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);animation:einblenden .2s}
+#blatt .innen{width:100%;max-width:440px;background:var(--flaeche2);border:1px solid var(--linie2);border-radius:24px 24px 0 0;padding:22px 20px calc(20px + var(--unten));animation:hoch .25s cubic-bezier(.3,.7,.4,1)}
+@media (min-width:600px){#blatt{align-items:center}#blatt .innen{border-radius:24px}}
+#blatt h3{margin:0 0 4px;font-size:19px}
+#blatt p{margin:0 0 16px;color:var(--zweit);font-size:14px}
+#blatt input.pin{width:100%;text-align:center;font-size:28px;letter-spacing:.5em;padding:14px;border-radius:14px;background:#000;border:1px solid var(--linie2);outline:none;-webkit-text-security:disc}
+#blatt .fehltext{min-height:20px;margin:10px 0;color:var(--rot);font-size:14px;text-align:center}
+.pin-form{display:flex;flex-direction:column;gap:10px}
+.pin-form h3{margin:0}
+.pin-form input{width:100%;max-width:none;text-align:left;font-size:17px;padding:12px 14px;border-radius:12px;background:var(--feld,#0d0d0f);border:1px solid var(--linie2);color:inherit;outline:none}
+.pin-form input.pin{letter-spacing:.3em;-webkit-text-security:disc}
+.pin-form input.pin::placeholder{letter-spacing:normal}
+.pin-form input.code{text-transform:uppercase;letter-spacing:.12em;font-family:ui-monospace,Menlo,monospace}
+.pin-form input.code::placeholder{text-transform:none;letter-spacing:normal;font-family:inherit}
+.pin-form input:focus{border-color:var(--akzent,#7aa2ff)}
+.pin-form .fehltext{min-height:0;color:var(--rot);font-size:14px}
+.pin-form .fehltext:empty{display:none}
+.pin-form .befehl{margin:0}
+.linkknopf{background:none;border:0;padding:4px 0;color:var(--zweit);font-size:13px;text-decoration:underline;text-underline-offset:3px;cursor:pointer;text-align:left}
+#blatt .knoepfe{display:flex;gap:8px}
+#blatt .knoepfe .knopf{flex:1;padding:13px}
+@keyframes einblenden{from{opacity:0}}
+@keyframes hoch{from{transform:translateY(40px);opacity:0}}
+.aufnahme{display:flex;align-items:center;gap:14px;margin-top:12px}
+.aufnahme .uhr{font:600 22px/1 ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums;min-width:64px}
+.aufnahme .rund.gross{width:56px;height:56px;background:var(--flaeche3);color:var(--text)}
+.aufnahme .rund.gross.an{background:var(--rot);color:#fff}
+textarea.feld{width:100%;max-width:none;text-align:left;resize:vertical;min-height:70px;font-size:15px;line-height:1.45}
+/* Agents */
+.agent{padding:16px 18px}
+.agent .kopfzeile{display:flex;align-items:center;gap:12px}
+.agent .kopfzeile .txt{flex:1;min-width:0}
+.agent .kopfzeile b{font-weight:600;font-size:16px}
+.agent .details{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.agent .ergebnis{margin-top:12px;padding:10px 12px;border-radius:12px;background:var(--flaeche2);font-size:14px;color:var(--zweit);white-space:pre-wrap}
+.agent .aktionen{display:flex;gap:8px;margin-top:12px}
+
+/* Gedächtnis */
+.zahlen{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
+@media (min-width:700px){.zahlen{grid-template-columns:repeat(6,1fr)}}
+.zahl-kachel{background:var(--flaeche);border:1px solid var(--linie);border-radius:14px;padding:12px}
+.zahl-kachel b{display:block;font-size:22px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.zahl-kachel span{font-size:11.5px;color:var(--leise)}
+.suche{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:var(--flaeche2);border:1px solid var(--linie);margin-bottom:12px}
+.suche input{flex:1;min-width:0;background:none;border:0;outline:none;font-size:16px}
+.tagwahl{display:flex;align-items:center;gap:8px}
+.tagwahl b{font-weight:500;font-size:14px;min-width:120px;text-align:center}
+.treffer{display:flex;gap:12px;padding:12px 0;border-top:1px solid var(--linie)}
+.treffer:first-child{border-top:0}
+.treffer img{width:64px;height:64px;border-radius:10px;object-fit:cover;flex:none;background:var(--flaeche3)}
+
+/* Anmelden */
+.willkommen{min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;text-align:center}
+.willkommen .marke{height:22px;margin-bottom:14px}
+.willkommen .claim{font-size:10px;letter-spacing:.3em;color:var(--leise);text-transform:uppercase;margin-bottom:56px}
+.willkommen form{width:100%;max-width:340px;display:flex;flex-direction:column;gap:10px}
+.willkommen input{padding:14px 16px;border-radius:14px;background:var(--flaeche2);border:1px solid var(--linie);outline:none;text-align:center;font-size:16px}
+.willkommen p{color:var(--leise);font-size:13px;margin-top:18px;max-width:340px}
+
+/* Meldung unten */
+#meldung{position:fixed;left:50%;bottom:calc(var(--tab) + var(--unten) + 18px);transform:translate(-50%,20px);opacity:0;z-index:40;
+  padding:10px 16px;border-radius:99px;background:var(--weiss);color:#000;font-size:14px;font-weight:500;transition:all .25s;pointer-events:none;max-width:90vw;text-align:center}
+#meldung.zeigen{opacity:1;transform:translate(-50%,0)}
+#meldung.fehler{background:var(--rot);color:#fff}
+@media (min-width:960px){#meldung{bottom:28px;left:calc(50% + 130px)}}
+#stimme-status{position:fixed;left:50%;transform:translateX(-50%);top:calc(env(safe-area-inset-top,0px) + 12px);z-index:45;display:flex;align-items:center;gap:10px;
+  padding:9px 14px;border-radius:99px;border:1px solid var(--linie2);background:rgba(28,28,31,.95);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);color:inherit;font-size:14px;cursor:pointer;white-space:nowrap;max-width:calc(100vw - 32px)}
+#stimme-status .punkt-an{width:8px;height:8px;border-radius:50%;background:var(--gut);animation:puls 1.2s ease-in-out infinite}
+#stimme-status .weg{color:var(--zweit);padding-left:10px;border-left:1px solid var(--linie2)}
+@keyframes puls{50%{opacity:.3}}
+.tipps{margin:10px 0 0;padding-left:18px;color:var(--zweit)}
+.tipps li{margin:2px 0}
+.ansicht{animation:rein .2s ease}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="wortmarke" viewBox="0 0 274 46"><g fill="none" stroke="currentColor" stroke-width="6.5">
+    <rect x="3" y="3" width="44" height="40" rx="20"/><path d="M34 32L50 46"/><path d="M62 18V32a14 14 0 0 0 28 0V18"/><path d="M112 3V43H152"/>
+    <path d="M215 9C211 5 204 3 195 3C181 3 174 9 174 15C174 32 216 18 216 32C216 40 208 43 195 43C185 43 178 40 173 36"/><path d="M255 3V43M240 3H270M240 43H270"/></g></symbol>
+  <symbol id="i-heute" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M20.5 12a8.5 8.5 0 0 1-12.4 7.6L3.5 21l1.4-4.3A8.5 8.5 0 1 1 20.5 12z"/></symbol>
+  <symbol id="i-gedaechtnis" viewBox="0 0 24 24"><path d="M12 3 3 7.5l9 4.5 9-4.5L12 3z"/><path d="m3 12 9 4.5 9-4.5"/><path d="m3 16.5 9 4.5 9-4.5"/></symbol>
+  <symbol id="i-agenten" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3.2 2"/></symbol>
+  <symbol id="i-einstellungen" viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></symbol>
+  <symbol id="i-konten" viewBox="0 0 24 24"><path d="M9 7H7a5 5 0 0 0 0 10h2M15 7h2a5 5 0 0 1 0 10h-2M8 12h8"/></symbol>
+  <symbol id="i-modelle" viewBox="0 0 24 24"><path d="M12 2.8 20 7.4v9.2l-8 4.6-8-4.6V7.4l8-4.6z"/><path d="M4 7.4 12 12l8-4.6M12 12v9.2"/></symbol>
+  <symbol id="i-stimme" viewBox="0 0 24 24"><path d="M4 10v4M8 7v10M12 4v16M16 8v8M20 11v2"/></symbol>
+  <symbol id="i-sicherheit" viewBox="0 0 24 24"><path d="M12 2.8 4.5 5.6v6c0 4.6 3.1 8.2 7.5 9.6 4.4-1.4 7.5-5 7.5-9.6v-6L12 2.8z"/><path d="m9 12 2 2 4-4"/></symbol>
+  <symbol id="i-glocke" viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15L6 16zM10 20.5a2 2 0 0 0 4 0"/></symbol>
+  <symbol id="i-system" viewBox="0 0 24 24"><rect x="3.5" y="4" width="17" height="7" rx="2"/><rect x="3.5" y="13" width="17" height="7" rx="2"/><path d="M7.5 7.5h.01M7.5 16.5h.01"/></symbol>
+  <symbol id="i-chip" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2.5V6M15 2.5V6M9 18v3.5M15 18v3.5M2.5 9H6M2.5 15H6M18 9h3.5M18 15h3.5"/></symbol>
+  <symbol id="i-box" viewBox="0 0 24 24"><path d="M4 7.5h16v12H4zM3 4.5h18v3H3zM10 11.5h4"/></symbol>
+  <symbol id="i-kalender" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></symbol>
+  <symbol id="i-haken" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="m8.5 12 2.5 2.5 4.5-5"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5.5" width="18" height="13" rx="2.5"/><path d="m3.5 7 8.5 6.5L20.5 7"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-stop" viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="2"/></symbol>
+  <symbol id="i-pfeil" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+  <symbol id="i-zurueck" viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></symbol>
+  <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></symbol>
+  <symbol id="i-klammer" viewBox="0 0 24 24"><path d="m20.5 11.5-8.3 8.3a5 5 0 0 1-7-7l8.6-8.6a3.4 3.4 0 0 1 4.8 4.8l-8.5 8.5a1.7 1.7 0 0 1-2.4-2.4l7.8-7.8"/></symbol>
+  <symbol id="i-kamera" viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></symbol>
+  <symbol id="i-datei" viewBox="0 0 24 24"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/></symbol>
+  <symbol id="i-hoch" viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></symbol>
+  <symbol id="i-suche" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.4-4.4"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5-12-7.5z"/></symbol>
+  <symbol id="i-kopie" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5.5A1.5 1.5 0 0 0 14.5 4h-9A1.5 1.5 0 0 0 4 5.5v9A1.5 1.5 0 0 0 5.5 16H8"/></symbol>
+</svg>
+
+<div id="anmelden" class="willkommen" hidden>
+  <svg class="marke" viewBox="0 0 274 46" role="img" aria-label="QuLSI"><use href="#wortmarke"/></svg>
+  <div class="claim">Quantized Local Superintelligence</div>
+  <form id="anmelde-form">
+    <input id="schluessel" type="password" placeholder="App-Schlüssel" autocomplete="current-password" autofocus>
+    <button class="knopf hell" style="padding:14px">Weiter</button>
+  </form>
+  <p>Der App-Schlüssel steht auf der Box in der Datei .env unter QULSI_API_KEY. Er bleibt nur auf diesem Gerät gespeichert.</p>
+</div>
+
+<div class="app" id="app" hidden>
+  <nav class="seite" aria-label="Menü">
+    <svg class="marke" viewBox="0 0 274 46" role="img" aria-label="QuLSI"><use href="#wortmarke"/></svg>
+    <div class="claim">Quantized Local Superintelligence</div>
+    <div id="nav-seite"></div>
+    <div class="fuss"><span class="status" id="status-seite"><i></i><span>verbinde…</span></span></div>
+  </nav>
+  <main class="inhalt">
+    <div class="spalte">
+      <header class="kopf">
+        <svg class="marke" viewBox="0 0 274 46" role="img" aria-label="QuLSI"><use href="#wortmarke"/></svg>
+        <span class="status" id="status"><i></i><span>verbinde…</span></span>
+      </header>
+      <div id="ansicht"></div>
+    </div>
+  </main>
+  <nav class="tabs" id="nav-tabs" aria-label="Menü"></nav>
+</div>
+<div id="meldung" role="status"></div>
+
+<script>
+"use strict";
+// ---------------------------------------------------------------- Grundlagen
+let key = "";
+try { key = localStorage.getItem("qulsi-key") || ""; } catch (e) {}
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const ic = (n, k = "i") => `<svg class="${k}"><use href="#i-${n}"/></svg>`;
+const zustand = {heute: null, freigaben: [], timeline: [], connectoren: null, agenten: null, einst: null, gedaechtnis: null,
+  verlauf: [], nachrichten: [], gespraech: 0, tag: null, offline: null};
+
+async function api(pfad, opt = {}) {
+  opt.headers = Object.assign({}, opt.headers, key ? {Authorization: "Bearer " + key} : {});
+  if (opt.json !== undefined) { opt.body = JSON.stringify(opt.json); opt.headers["Content-Type"] = "application/json"; opt.method = opt.method || "POST"; }
+  const r = await fetch(pfad, opt);
+  if (r.status === 401) { anmelden(true); throw Object.assign(new Error("Schlüssel fehlt"), {status: 401}); }
+  if (!r.ok) {
+    let t = await r.text(), daten = {};
+    try { daten = JSON.parse(t); t = daten.detail || daten.fehler || t; } catch (e) {}
+    const f = new Error(typeof t === "string" ? t : JSON.stringify(t));
+    f.status = r.status; f.daten = daten;
+    throw f;
+  }
+  return r;
+}
+const holen = async (pfad) => (await api(pfad)).json();
+// Sitzungs-Cookie für das, was der Browser ohne Header lädt (Live-Ereignisse, Bilder).
+// Gilt nur lesend für /api/events und /api/objekt/, der App-Schlüssel kommt nie in eine Adresse.
+let sitzungBereit = null;
+function sitzung(neu = false) {
+  if (neu || !sitzungBereit) {
+    sitzungBereit = api("/api/sitzung", {method: "POST"}).then(() => true);
+    sitzungBereit.catch(() => (sitzungBereit = null));
+  }
+  return sitzungBereit;
+}
+async function bilderLaden(el) {
+  const bilder = [...el.querySelectorAll("img[data-quelle]")];
+  if (!bilder.length) return;
+  try { await sitzung(); } catch (e) {}
+  for (const img of bilder) {
+    img.onerror = async () => {
+      img.onerror = () => img.remove();
+      try { await sitzung(true); img.src = img.dataset.quelle + (img.dataset.quelle.includes("?") ? "&" : "?") + "n=1"; }
+      catch (e) { img.remove(); }
+    };
+    img.src = img.dataset.quelle;
+  }
+}
+
+let meldTimer;
+function melden(text, fehler = false) {
+  const m = $("meldung");
+  m.textContent = text;
+  m.className = "zeigen" + (fehler ? " fehler" : "");
+  clearTimeout(meldTimer);
+  meldTimer = setTimeout(() => (m.className = ""), fehler ? 4200 : 1800);
+}
+
+function anmelden(zeigen) {
+  $("anmelden").hidden = !zeigen;
+  $("app").hidden = zeigen;
+  if (zeigen) setTimeout(() => $("schluessel").focus(), 50);
+}
+$("anmelde-form").addEventListener("submit", (ev) => {
+  ev.preventDefault();
+  key = $("schluessel").value.trim();
+  sitzungBereit = null;
+  try { localStorage.setItem("qulsi-key", key); } catch (e) {}
+  anmelden(false);
+  start();
+});
+
+// ---------------------------------------------------------------- Menü
+const MENUE = [
+  {id: "heute", titel: "Heute", icon: "heute"},
+  {id: "chat", titel: "Gespräch", icon: "chat"},
+  {id: "gedaechtnis", titel: "Gedächtnis", icon: "gedaechtnis"},
+  {id: "agenten", titel: "Agents", icon: "agenten"},
+  {id: "einstellungen", titel: "Einstellungen", icon: "einstellungen"},
+];
+// Kleiner Hinweis, wenn im Gespräch Inhalte von außen standen. Einmal, wegklickbar bis zum nächsten Gespräch.
+function chatHinweis() {
+  const el = $("chat-hinweis");
+  if (!el) return;
+  const an = zustand.nachrichten.some((n) => n.belastet) && zustand.hinweisWeg !== zustand.gespraech;
+  el.innerHTML = an ? `<div class="hinweis-zeile">${ic("sicherheit")}<span>Hier kamen Inhalte von außen vor. Aktionen fragen deshalb vorher nach.</span><button type="button" aria-label="Ausblenden">×</button></div>` : "";
+  el.querySelector("button")?.addEventListener("click", () => { zustand.hinweisWeg = zustand.gespraech; chatHinweis(); });
+}
+// Offene Freigaben im Gespräch: nur dieser Bereich wird neu gezeichnet, damit Eingabe und Verlauf bleiben.
+function chatFreigaben() {
+  const el = $("chat-freigaben");
+  if (!el || $("blatt")) return;
+  const offen = zustand.freigaben.filter((f) => f.status === "offen");
+  const schluessel = offen.map((f) => f.id).join() + "|" + JSON.stringify(zustand.pin || {});
+  if (el.dataset.stand === schluessel) return;
+  el.dataset.stand = schluessel;
+  el.innerHTML = offen.length ? `<div class="karte chat-freigabe"><h3 class="warn">${ic("sicherheit")}${offen.length === 1 ? "QuLSI wartet auf deine Freigabe" : offen.length + " Freigaben warten auf dich"}</h3>
+    ${freigabenListe(offen)}</div>` : "";
+  freigabenVerdrahten(el);
+  if (offen.length) window.scrollTo({top: document.body.scrollHeight, behavior: "smooth"});
+}
+function menueZeichnen(aktiv) {
+  const offen = zustand.freigaben.filter((f) => f.status === "offen").length;
+  try { offen ? navigator.setAppBadge?.(offen) : navigator.clearAppBadge?.(); } catch (e) {}
+  document.title = (offen ? `(${offen}) ` : "") + "QuLSI";
+  chatFreigaben();
+  const zahl = (id) => ((id === "heute" || id === "chat") && offen ? `<span class="zahl">${offen}</span>` : "");
+  $("nav-tabs").innerHTML = MENUE.map((m) => `<a href="#/${m.id}" class="${m.id === aktiv ? "aktiv" : ""}" aria-current="${m.id === aktiv ? "page" : "false"}">
+    <span class="punkt">${ic(m.icon)}${zahl(m.id)}</span>${m.titel === "Einstellungen" ? "Mehr" : m.titel}</a>`).join("");
+  $("nav-seite").innerHTML = MENUE.map((m) => `<a href="#/${m.id}" class="${m.id === aktiv ? "aktiv" : ""}">${ic(m.icon)}${m.titel}${zahl(m.id)}</a>`).join("");
+}
+function statusZeigen(offline) {
+  zustand.offline = offline;
+  for (const id of ["status", "status-seite"]) {
+    $(id).className = "status " + (offline ? "offline" : "online");
+    $(id).lastChild.textContent = offline ? "Offline, nur lokal" : "Online";
+  }
+}
+
+// ---------------------------------------------------------------- Router
+const ANSICHTEN = {};
+function route() {
+  const teile = (location.hash.replace(/^#\/?/, "") || "heute").split("/");
+  const name = ANSICHTEN[teile[0]] ? teile[0] : "heute";
+  menueZeichnen(name);
+  const el = $("ansicht");
+  el.className = "ansicht";
+  void el.offsetWidth;
+  ANSICHTEN[name](el, teile.slice(1));
+  if (!route.erst) window.scrollTo(0, 0);
+  route.erst = false;
+}
+window.addEventListener("hashchange", route);
+
+// ---------------------------------------------------------------- Heute
+function begruessung() {
+  const h = new Date().getHours();
+  return h < 5 ? "Gute Nacht" : h < 11 ? "Guten Morgen" : h < 18 ? "Hallo" : "Guten Abend";
+}
+const datumLang = (d = new Date()) => d.toLocaleDateString("de-DE", {weekday: "long", day: "numeric", month: "long"});
+function liste(eintraege, zeile, leer) {
+  return eintraege && eintraege.length ? `<ul class="liste">${eintraege.map(zeile).join("")}</ul>` : `<div class="leer">${leer}</div>`;
+}
+
+ANSICHTEN.heute = (el) => {
+  const h = zustand.heute;
+  const offen = zustand.freigaben.filter((f) => f.status === "offen");
+  const mails = !h ? null : typeof h.mails === "string" ? `<div class="leer">${esc(h.mails)}</div>`
+    : liste(h.mails, (m) => `<li><span style="min-width:0"><span>${esc(m.betreff)}</span><div class="klein">${esc(m.von)} · ${esc(m.datum)}</div></span></li>`, "Keine neuen Mails");
+  el.innerHTML = `
+    <h1 class="titel">${begruessung()}${zustand.nutzer?.name ? ", " + esc(zustand.nutzer.name) : ""}</h1>
+    <p class="unter">${datumLang()}</p>
+    <a class="frage" href="#/chat">${ic("chat")}<span>Frag QuLSI etwas…</span></a>
+    ${einrichtungOffen() ? `<a class="karte" href="#/einrichtung" style="display:flex;gap:12px;align-items:center;border-color:rgba(255,179,64,.35)">${ic("sicherheit")}<span style="flex:1"><b>Einrichtung abschließen</b><div class="klein">Noch offen: ${[!zustand.nutzer?.bundesland && "Bundesland", zustand.pin && !zustand.pin.eingerichtet && "Freigabe-PIN"].filter(Boolean).join(" und ")}</div></span>${ic("pfeil", "i pfeil")}</a>` : ""}
+    ${offen.length ? `<div class="karte" style="border-color:rgba(255,179,64,.35)"><h3 class="warn">${ic("sicherheit")}${offen.length > 1 ? offen.length + " Freigaben warten" : "Eine Freigabe wartet"} auf dich</h3>
+      ${freigabenListe(offen)}</div>` : ""}
+    <div class="raster">
+      <div class="karte"><h3>${ic("kalender")}Termine</h3>${h ? liste(h.termine, (t) => `<li><span class="zeit">${t.ganztags ? "ganzt." : esc(t.start)}</span><span>${esc(t.titel)}${t.ort ? `<div class="klein">${esc(t.ort)}</div>` : ""}</span></li>`, "Heute keine Termine") : lade()}</div>
+      <div class="karte"><h3>${ic("haken")}Aufgaben</h3>${h ? liste(h.aufgaben, (a) => `<li><span class="zeit">${a.faellig ? esc(a.faellig.slice(5).split("-").reverse().join(".")) : "–"}</span><span>${esc(a.titel)}${a.projekt ? `<div class="klein">${esc(a.projekt)}</div>` : ""}</span></li>`, "Nichts offen") : lade()}</div>
+      <div class="karte breit"><h3>${ic("mail")}Neue Mails</h3>${mails ?? lade()}</div>
+      <div class="karte breit"><h3>${ic("gedaechtnis")}Heute passiert<a class="mehr" href="#/gedaechtnis">Alles ansehen</a></h3>
+        ${liste(verlaufAufbereiten(zustand.timeline).inhalt.slice(0, 8), verlaufZeile, "Noch nichts passiert")}</div>
+    </div>`;
+  freigabenVerdrahten(el);
+};
+const lade = () => `<div class="leer">lädt…</div>`;
+const WERKZEUG_NAMEN = {
+  "stimme.probe": "Neue Stimme übernehmen", "konto.verbinden": "Konto verbinden",
+  "browser.open": "Webseite öffnen", "browser.search": "Im Internet suchen",
+  "calendar.create": "Termin anlegen", "calendar.search": "Termine suchen", "calendar.sync": "Kalender abgleichen", "holidays.list": "Feiertage nachsehen",
+  "tasks.create": "Aufgabe anlegen", "tasks.done": "Aufgabe abhaken", "tasks.list": "Aufgaben anzeigen",
+  "camera.capture": "Foto aufnehmen", "vision.analyze": "Bild verstehen",
+  "email.draft": "Mail-Entwurf schreiben", "email.read": "Mails lesen", "email.search": "Mails durchsuchen", "email.send": "Mail senden",
+  "files.index": "Dateien einlesen", "files.read": "Datei öffnen", "files.search": "Dateien durchsuchen",
+  "nas.index": "NAS einlesen", "nas.list": "NAS-Ordner anzeigen", "nas.read": "Datei vom NAS öffnen", "nas.search": "NAS durchsuchen",
+  "google.calendar.create": "Google-Termin anlegen", "google.calendar.sync": "Google-Kalender abgleichen",
+  "google.drive.read": "Drive-Datei öffnen", "google.drive.search": "Google Drive durchsuchen",
+  "google.mail.draft": "Gmail-Entwurf schreiben", "google.mail.read": "Gmail lesen", "google.mail.search": "Gmail durchsuchen", "google.mail.send": "Gmail senden",
+  "microsoft.calendar.create": "Outlook-Termin anlegen", "microsoft.calendar.sync": "Outlook-Kalender abgleichen",
+  "microsoft.mail.draft": "Outlook-Entwurf schreiben", "microsoft.mail.read": "Outlook-Mails lesen", "microsoft.mail.search": "Outlook durchsuchen", "microsoft.mail.send": "Outlook senden",
+  "microsoft.onedrive.read": "OneDrive-Datei öffnen", "microsoft.onedrive.search": "OneDrive durchsuchen",
+  "home.get_state": "Gerätezustand abfragen", "home.set_state": "Gerät schalten", "door.unlock": "Tür öffnen",
+  "memory.find": "Im Gedächtnis finden", "memory.forget": "Etwas vergessen", "memory.organize": "Gedächtnis aufräumen", "memory.remember": "Etwas merken",
+  "memory.search": "Gedächtnis durchsuchen", "memory.timeline": "Verlauf ansehen",
+  "memchip.export": "Memchip sichern", "memchip.import": "Memchip einspielen", "memchip.status": "Memchip-Status",
+  "objects.list": "Gegenstände anzeigen", "objects.where": "Wo liegt etwas?", "persons.save": "Person merken", "persons.search": "Personen suchen",
+  "places.list": "Orte anzeigen", "places.save": "Ort merken", "projects.get": "Projekt ansehen", "projects.save": "Projekt merken",
+  "relations.add": "Beziehung merken", "system.privacy": "Datenschutz-Status",
+};
+const werkzeugName = (t) => WERKZEUG_NAMEN[t] || t;
+// Bereiche der Sicherheitsseite: Reihenfolge = Anzeige.
+const WERKZEUG_BEREICHE = [
+  ["gedaechtnis", "Gedächtnis", "gedaechtnis", (t) => /^(memory|memchip|objects|persons|places|projects|relations)\./.test(t)],
+  ["kalender", "Kalender & Aufgaben", "kalender", (t) => /^(calendar|tasks|holidays)\./.test(t)],
+  ["mail", "Mail", "mail", (t) => /^email\./.test(t)],
+  ["dateien", "Dateien & NAS", "box", (t) => /^(files|nas)\./.test(t)],
+  ["google", "Google", "konten", (t) => /^google\./.test(t)],
+  ["microsoft", "Microsoft", "konten", (t) => /^microsoft\./.test(t)],
+  ["internet", "Internet", "suche", (t) => /^browser\./.test(t)],
+  ["zuhause", "Zuhause", "box", (t) => /^(home|door)\./.test(t)],
+  ["kamera", "Kamera", "chip", (t) => /^(camera|vision)\./.test(t)],
+  ["system", "System", "system", () => true],
+];
+
+// ---------------------------------------------------------------- Freigaben (Erlauben mit PIN)
+// Was QuLSI tun will, in einem normalen Satz. Technische Felder (art, person, ids …) bleiben weg.
+function argumente(f) {
+  let a = f.arguments;
+  if (typeof a === "string") { try { a = JSON.parse(a); } catch (e) { a = {}; } }
+  return a && typeof a === "object" ? a : {};
+}
+function freigabeSatz(f) {
+  const a = argumente(f), w = (...k) => k.map((x) => a[x]).find((x) => typeof x === "string" && x.trim());
+  const t = f.tool || "";
+  if (/memory\.remember|persons\.save|places\.save|projects\.save/.test(t)) return w("text", "inhalt", "name", "titel") ? `QuLSI möchte sich merken: „${w("text", "inhalt", "name", "titel")}“` : "QuLSI möchte sich etwas merken.";
+  if (/memory\.forget/.test(t)) return w("text", "frage", "query") ? `QuLSI möchte vergessen: „${w("text", "frage", "query")}“` : "QuLSI möchte etwas aus dem Gedächtnis löschen.";
+  if (/mail\.send|email\.send/.test(t)) return `QuLSI möchte eine Mail${w("an", "to", "empfaenger") ? " an " + w("an", "to", "empfaenger") : ""} senden.`;
+  if (/mail\.draft|email\.draft/.test(t)) return `QuLSI möchte einen Mail-Entwurf${w("an", "to") ? " an " + w("an", "to") : ""} anlegen.`;
+  if (/calendar\.create/.test(t)) return `QuLSI möchte einen Termin anlegen${w("titel", "title", "summary") ? ": „" + w("titel", "title", "summary") + "“" : ""}${w("start", "beginn", "datum") ? " am " + w("start", "beginn", "datum").replace("T", " um ").slice(0, 19) : ""}.`;
+  if (/tasks\.create/.test(t)) return `QuLSI möchte eine Aufgabe anlegen${w("titel", "title", "text") ? ": „" + w("titel", "title", "text") + "“" : ""}.`;
+  if (t === "door.unlock") return "QuLSI möchte die Tür öffnen.";
+  if (t === "home.set_state") return `QuLSI möchte ${w("name", "entity_id", "geraet") || "ein Gerät"} schalten.`;
+  if (t === "stimme.probe") return "QuLSI möchte deine neue Stimmprobe als Stimme übernehmen.";
+  if (t === "konto.verbinden") return `QuLSI möchte ein Konto verbinden${w("connector") ? ": " + w("connector") : ""}.`;
+  return `QuLSI möchte: ${werkzeugName(t)}.`;
+}
+// Vorschau nur, wenn sie etwas zeigt, das der Satz nicht schon sagt (z. B. Betreff und Text einer Mail).
+function vorschauText(f) {
+  if (/memory\.|persons\.|places\.|projects\.|tasks\.|calendar\.|door\.|home\.|stimme\.|konto\./.test(f.tool || "")) return "";
+  if (typeof f.vorschau === "string" && f.vorschau.trim()) return f.vorschau;
+  const a = argumente(f), teile = [];
+  const b = a.betreff ?? a.subject, x = a.text ?? a.body ?? a.inhalt;
+  if (typeof b === "string") teile.push("Betreff: " + b);
+  if (typeof x === "string") teile.push((teile.length ? "\n" : "") + x);
+  return teile.join("\n");
+}
+function restzeit(iso) {
+  const s = Math.round((new Date(iso) - Date.now()) / 1000);
+  return s <= 0 ? "abgelaufen" : s < 60 ? `noch ${s} s` : `noch ${Math.ceil(s / 60)} min`;
+}
+// Mehrere Karten: der Hinweis auf Inhalte von außen steht nur einmal, an der ersten betroffenen Karte.
+// Hat der Schutz eine Anweisung in fremdem Text gefunden, steht sie vorne im Freigabe-Grund.
+function injektionText(f) {
+  const b = String(f.begruendung || "");
+  if (!/Anweisung(en)? an QuLSI|Anweisungen unterzuschieben/.test(b)) return "";
+  const m = b.match(/^.*?deine Freigabe\./s);
+  return m ? m[0] : b;
+}
+function freigabenListe(liste) {
+  let gezeigt = false;
+  return liste.map((f) => { const k = freigabeKarte({...f, ohneWarnung: f.belastet && gezeigt}); gezeigt ||= f.belastet; return k; }).join("");
+}
+function freigabeKarte(f) {
+  const pin = zustand.pin;
+  const gesperrt = pin?.gesperrt_bis && new Date(pin.gesperrt_bis) > new Date();
+  const vt = vorschauText(f);
+  return `<div class="freigabe" data-freigabe="${esc(f.id)}">
+    <div class="kopfzeile"><b>${esc(werkzeugName(f.tool))}</b><span class="klein" data-ablauf="${esc(f.laeuft_ab_iso || "")}">${f.laeuft_ab_iso ? restzeit(f.laeuft_ab_iso) : ""}</span></div>
+    <div class="satz">${esc(freigabeSatz(f))}</div>
+    ${vt ? `<div class="vorschau">${esc(vt)}</div>` : ""}
+    ${injektionText(f) ? `<div class="warnung-rot" style="margin-top:8px">${ic("sicherheit")}<span>${esc(injektionText(f))}</span></div>`
+      : f.belastet && !f.ohneWarnung ? `<div class="klein warn" style="margin-top:8px">Vorher kamen Inhalte von außen vor (Mail, Webseite oder Datei). Erlaube nur, wenn du das wirklich willst.</div>`
+      : f.begruendung && !f.belastet ? `<div class="klein" style="color:var(--zweit);margin-top:6px">${esc(f.begruendung)}</div>` : ""}
+    <div class="knoepfe">
+      <button class="knopf rot-umriss" data-ablehnen>Ablehnen</button>
+      ${pin?.eingerichtet ? `<button class="knopf hell" data-erlauben ${gesperrt ? "disabled" : ""}>Erlauben</button>` : ""}
+    </div>
+    ${!pin?.eingerichtet ? `<div class="klein" style="margin-top:8px">Zum Erlauben brauchst du eine Freigabe-PIN. <a href="#/einstellungen/sicherheit" style="color:var(--text,#fff);text-decoration:underline;text-underline-offset:3px">Jetzt festlegen</a></div>` : ""}
+    ${gesperrt ? `<div class="klein warn" style="margin-top:8px">Zu viele falsche PINs. Erlauben in der App wieder ab ${new Date(pin.gesperrt_bis).toLocaleTimeString("de-DE", {hour: "2-digit", minute: "2-digit"})}.</div>` : ""}
+  </div>`;
+}
+function freigabenVerdrahten(el) {
+  el.querySelectorAll("[data-freigabe]").forEach((k) => {
+    const id = k.dataset.freigabe;
+    k.querySelector("[data-ablehnen]").addEventListener("click", (ev) => entscheiden(id, "ablehnen", null, ev.currentTarget));
+    k.querySelector("[data-erlauben]")?.addEventListener("click", () => pinBlatt(id));
+  });
+}
+setInterval(() => document.querySelectorAll("[data-ablauf]").forEach((x) => { if (x.dataset.ablauf) x.textContent = restzeit(x.dataset.ablauf); }), 1000);
+async function entscheiden(id, entscheidung, pin, knopf) {
+  if (knopf) knopf.disabled = true;
+  try {
+    const r = await (await api("/api/freigaben/" + id, {json: pin ? {entscheidung, pin} : {entscheidung}})).json();
+    melden(r.status === "freigegeben" ? "Erlaubt" : r.status === "abgelehnt" ? "Abgelehnt" : (r.ergebnis || r.status), r.status === "fehler");
+    blattZu();
+  } catch (e) {
+    if (e.status === 403 && pin) { pinFehler(e.message + (e.daten.versuche_uebrig != null ? ` Noch ${e.daten.versuche_uebrig} Versuche.` : "")); return; }
+    if (e.status === 429) { zustand.pin = {...zustand.pin, gesperrt_bis: e.daten.gesperrt_bis}; blattZu(); melden(e.message, true); }
+    else if (e.status === 409) { blattZu(); melden("Diese Freigabe ist abgelaufen oder schon entschieden.", true); }
+    else { pinFehler(e.message); melden(e.message, true); }
+    if (knopf) knopf.disabled = false;
+  }
+  freigabenLaden();
+}
+function pinBlatt(id) {
+  const f = zustand.freigaben.find((x) => x.id === id);
+  blattZu();
+  const b = document.createElement("div");
+  b.id = "blatt";
+  b.innerHTML = `<form class="innen" autocomplete="off">
+    <h3>${esc(werkzeugName(f?.tool || ""))} erlauben</h3>
+    <p>Gib deine Freigabe-PIN ein. Sie wird nicht gespeichert.</p>
+    <input class="pin" id="pin" type="password" inputmode="numeric" pattern="[0-9]*" autocomplete="off" maxlength="12" aria-label="Freigabe-PIN">
+    <div class="fehltext" id="pin-fehler"></div>
+    <div class="knoepfe"><button type="button" class="knopf" id="pin-abbruch">Abbrechen</button><button class="knopf hell" id="pin-ok">Erlauben</button></div></form>`;
+  document.body.appendChild(b);
+  b.addEventListener("click", (ev) => { if (ev.target === b) blattZu(); });
+  $("pin-abbruch").onclick = blattZu;
+  $("pin").addEventListener("input", (ev) => { ev.target.value = ev.target.value.replace(/\D/g, ""); });
+  b.querySelector("form").addEventListener("submit", (ev) => {
+    ev.preventDefault();
+    const pin = $("pin").value;
+    if (!pin) return;
+    $("pin").value = "";
+    entscheiden(id, "erlauben", pin, $("pin-ok"));
+  });
+  setTimeout(() => $("pin")?.focus(), 60);
+}
+function pinFehler(text) { if ($("pin-fehler")) { $("pin-fehler").textContent = text; $("pin-ok").disabled = false; $("pin").focus(); } }
+function blattZu() { $("blatt")?.remove(); }
+document.addEventListener("keydown", (ev) => { if (ev.key === "Escape") blattZu(); });
+async function freigabenLaden() {
+  try { [zustand.freigaben, zustand.pin] = await Promise.all([holen("/api/freigaben"), holen("/api/freigaben/pin")]); } catch (e) { return; }
+  const a = aktuelleAnsicht();
+  if (a === "heute" || (a === "einstellungen" && location.hash.includes("stimme"))) route(); else menueZeichnen(a);
+}
+
+// ---------------------------------------------------------------- Freigabe-PIN festlegen und ändern
+// Erste PIN oder PIN vergessen: mit dem Einrichtungscode, den nur die Box zeigt. Ändern: mit der bisherigen PIN.
+// Die PIN-Felder werden gleich nach dem Lesen geleert, verglichen wird nur hier im Browser.
+let pinMitCode = false, pinAendernOffen = false;
+const uhrzeit = (iso) => new Date(iso).toLocaleTimeString("de-DE", {hour: "2-digit", minute: "2-digit"});
+function pinFormular(erst = false) {
+  const pin = zustand.pin;
+  const code = !pin?.eingerichtet || pinMitCode;
+  const bis = pin?.einrichtungscode_offen_bis && new Date(pin.einrichtungscode_offen_bis) > new Date() ? pin.einrichtungscode_offen_bis : null;
+  const bf = zustand.umgebung?.befehle?.freigabe_pin;
+  const feld = (id, text) => `<input class="pin" id="${id}" type="password" inputmode="numeric" pattern="[0-9]*" autocomplete="off" maxlength="12" placeholder="${text}" aria-label="${text}">`;
+  return `<form class="karte pin-form" id="pin-form" autocomplete="off" data-modus="${code ? "code" : "aendern"}">
+    ${erst ? "" : `<h3>${!code ? "PIN ändern" : pin?.eingerichtet ? "Neue PIN mit Einrichtungscode" : "Freigabe-PIN festlegen"}</h3>`}
+    ${code ? `<div class="klein" style="color:var(--zweit)">Den Einrichtungscode zeigt die Box${!bf && runpod() ? " (RunPod: <code>bash runpod/qulsi.sh pin</code>)" : bf ? ", einen neuen holst du mit dem Befehl unten" : ""}. Er gilt 15 Minuten und nur einmal.${bis ? ` <b style="color:var(--text,inherit)">Code gültig bis ${uhrzeit(bis)} Uhr.</b>` : ""}</div>
+      <input class="code" id="pin-code" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="24" placeholder="Einrichtungscode, z. B. ABCD-EFGH" aria-label="Einrichtungscode">`
+      : feld("pin-alt", "Bisherige PIN")}
+    ${feld("pin-neu", "Neue PIN, 6 bis 12 Ziffern")}
+    ${feld("pin-neu2", "Neue PIN wiederholen")}
+    <div class="fehltext" id="pin-form-fehler" role="alert"></div>
+    ${code && bf ? befehl(bf) : ""}
+    ${erst ? "" : `<button class="knopf hell" id="pin-form-ok">${code ? "PIN festlegen" : "PIN ändern"}</button>
+      ${pin?.eingerichtet ? `<button type="button" class="linkknopf" id="pin-modus">${code ? "Doch mit der bisherigen PIN ändern" : "PIN vergessen? Mit neuem Einrichtungscode von der Box"}</button>` : ""}`}
+  </form>`;
+}
+// Leere Angaben im Ersteinrichtungs-Ablauf: PIN überspringen.
+const pinLeer = () => !["pin-code", "pin-alt", "pin-neu", "pin-neu2"].some((id) => $(id)?.value);
+async function pinSenden(modus) {
+  const wert = (id) => { const x = $(id); const v = x ? x.value.trim() : ""; if (x && id !== "pin-code") x.value = ""; return v; };
+  const code = wert("pin-code"), alt = wert("pin-alt"), neu = wert("pin-neu"), neu2 = wert("pin-neu2");
+  if (modus === "code" && !code) throw new Error("Bitte den Einrichtungscode von der Box eingeben.");
+  if (modus === "aendern" && !alt) throw new Error("Bitte die bisherige PIN eingeben.");
+  if (!/^\d{6,12}$/.test(neu)) throw new Error("Die neue PIN braucht 6 bis 12 Ziffern.");
+  if (neu !== neu2) throw new Error("Die beiden neuen PINs sind nicht gleich.");
+  let r;
+  try {
+    r = await (await api("/api/freigabe-pin", {json: modus === "code" ? {einrichtungscode: code, neue_pin: neu} : {alte_pin: alt, neue_pin: neu}})).json();
+  } catch (e) {
+    if (e.status === 404 || e.status === 405) throw new Error("Das kann die Box noch nicht, kommt mit dem nächsten Update.");
+    if (e.status === 403) throw new Error(e.message + (e.daten?.versuche_uebrig != null ? ` Noch ${e.daten.versuche_uebrig} Versuche.` : ""));
+    if (e.status === 429) throw new Error(e.message + (e.daten?.gesperrt_bis ? ` Wieder ab ${uhrzeit(e.daten.gesperrt_bis)} Uhr.` : ""));
+    throw e;
+  }
+  if ($("pin-code")) $("pin-code").value = "";
+  pinMitCode = pinAendernOffen = false;
+  try { zustand.pin = await holen("/api/freigaben/pin"); } catch (e) { zustand.pin = {...zustand.pin, eingerichtet: true}; }
+  return r;
+}
+function pinVerdrahten(el, fertig) {
+  const f = el.querySelector("#pin-form");
+  if (!f) return;
+  f.querySelectorAll("input.pin").forEach((x) => x.addEventListener("input", () => { x.value = x.value.replace(/\D/g, ""); }));
+  f.querySelectorAll("[data-kopie]").forEach((b) => b.addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(b.dataset.kopie); melden("Kopiert"); } catch (e) { melden("Kopieren nicht möglich", true); }
+  }));
+  $("pin-modus")?.addEventListener("click", () => { pinMitCode = !pinMitCode; fertig(); });
+  f.addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const knopf = $("pin-form-ok");
+    if (!knopf) return;
+    knopf.disabled = true;
+    $("pin-form-fehler").textContent = "";
+    try {
+      const r = await pinSenden(f.dataset.modus);
+      melden(r?.erste ? "PIN festgelegt" : "PIN geändert");
+      fertig();
+      freigabenLaden();
+    } catch (e) { $("pin-form-fehler").textContent = e.message; knopf.disabled = false; }
+  });
+}
+
+// ---------------------------------------------------------------- Ersteinrichtung
+// Eine neue Box startet leer. Name, Bundesland und PIN einmal abfragen, alles lässt sich überspringen.
+ANSICHTEN.einrichtung = (el) => {
+  const n = zustand.nutzer || {};
+  const pinDa = zustand.pin?.eingerichtet;
+  el.innerHTML = `
+    <h1 class="titel">Willkommen bei QuLSI</h1>
+    <p class="unter">Drei kurze Angaben, dann geht es los. Ändern kannst du alles später unter Mehr.</p>
+    <h2 class="abschnitt">Wie heißt du?</h2>
+    <div class="gruppe"><div class="zeile spalte"><span class="txt"><b>Vorname</b><small>So spricht QuLSI dich an</small></span>
+      <input class="feld" id="e-name" maxlength="40" autocomplete="given-name" placeholder="Vorname" value="${esc(n.name || "")}" style="text-align:left"></div></div>
+    <h2 class="abschnitt">Wo steht die Box?</h2>
+    <div class="gruppe"><div class="zeile spalte"><span class="txt"><b>Bundesland</b><small>Für die Feiertage dort</small></span>
+      <select class="wahl" id="e-land">${[["", "Bitte wählen"], ...Object.entries(BUNDESLAENDER)].map(([k, t]) =>
+        `<option value="${k}" ${(n.bundesland || "") === k ? "selected" : ""}>${t}</option>`).join("")}</select></div></div>
+    <h2 class="abschnitt">Freigabe-PIN</h2>
+    ${pinDa ? `<div class="gruppe">${zeile("Freigabe-PIN", "Schon festgelegt", `<span class="chip gut">Gesetzt</span>`)}</div>`
+      : `<p class="hinweis" style="margin:-4px 6px 10px">Mit der PIN erlaubst du Aktionen wie „Mail senden“. Ohne PIN kannst du nur ablehnen.</p>${pinFormular(true)}`}
+    <div class="reihe" style="justify-content:space-between;align-items:center;margin-top:18px">
+      <button type="button" class="linkknopf" id="e-spaeter">Später</button>
+      <button type="button" class="knopf hell" id="e-fertig">Fertig</button>
+    </div>`;
+  pinVerdrahten(el, () => route());
+  const schliessen = () => { try { sessionStorage.setItem("qulsi-einrichtung-spaeter", "1"); } catch (e) {} location.hash = "#/heute"; };
+  $("e-spaeter").addEventListener("click", schliessen);
+  $("e-fertig").addEventListener("click", async (ev) => {
+    const knopf = ev.currentTarget;
+    knopf.disabled = true;
+    try {
+      const name = $("e-name").value.trim() || null, bundesland = $("e-land").value || null;
+      if (name !== (n.name || null) || bundesland !== (n.bundesland || null)) {
+        try { zustand.nutzer = {...zustand.nutzer, ...await (await api("/api/nutzer", {json: {name, bundesland}})).json()}; }
+        catch (e) { melden(e.message, true); knopf.disabled = false; return; }
+      }
+      if (!pinDa && !pinLeer()) {
+        $("pin-form-fehler").textContent = "";
+        try { await pinSenden("code"); } catch (e) { $("pin-form-fehler").textContent = e.message; knopf.disabled = false; return; }
+      }
+      melden("Fertig eingerichtet");
+      schliessen();
+    } catch (e) { melden(e.message, true); knopf.disabled = false; }
+  });
+};
+// Offen, solange Bundesland oder PIN fehlen (auch nach einer Wiederherstellung). Nur ein neuer Core liefert bundesland.
+function einrichtungOffen() {
+  const n = zustand.nutzer;
+  if (!n || !("bundesland" in n)) return false;
+  return !n.bundesland || (zustand.pin && !zustand.pin.eingerichtet);
+}
+async function einrichtungPruefen() {
+  if (zustand.nutzer && "bundesland" in zustand.nutzer && !zustand.pin) { try { zustand.pin = await holen("/api/freigaben/pin"); } catch (e) { return; } }
+  if (!einrichtungOffen()) return;
+  let spaeter = false;
+  try { spaeter = !!sessionStorage.getItem("qulsi-einrichtung-spaeter"); } catch (e) {}
+  if (!spaeter && aktuelleAnsicht() === "heute" && location.hash !== "#/einrichtung") location.hash = "#/einrichtung";
+  else if (aktuelleAnsicht() === "heute") route();
+}
+
+// ---------------------------------------------------------------- Hochladen (Fotos und Dateien)
+// Hochgeladenes gilt als fremder Inhalt (kann von Dritten stammen): QuLSI fragt danach vor Aktionen nach.
+// Die Box prüft Größe und Typ selbst noch einmal (MIME und Inhalt), die Prüfung hier spart nur den Weg.
+const HOCH_TYPEN = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif", "image/gif", "application/pdf", "text/plain", "text/markdown", "text/csv",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation", "application/vnd.oasis.opendocument.text", "application/vnd.oasis.opendocument.spreadsheet"];
+const HOCH_ENDUNGEN = /\.(jpe?g|png|webp|heic|heif|gif|pdf|txt|md|csv|docx|xlsx|pptx|odt|ods)$/i;
+const HOCH_ACCEPT = "image/*,.pdf,.txt,.md,.csv,.docx,.xlsx,.pptx,.odt,.ods";
+const hoch = {grenzen: null, liste: null, aktiv: [], fehlt: false};
+const groesse = (b) => b >= 1048576 ? (b / 1048576).toFixed(1).replace(".", ",") + " MB" : Math.max(1, Math.round(b / 1024)) + " KB";
+const istFoto = (f) => /^image\//.test(f.type) || /\.(jpe?g|png|webp|heic|heif|gif)$/i.test(f.name || "");
+const beruehrung = () => matchMedia("(pointer:coarse)").matches;
+function hochPruefen(f) {
+  const max = hoch.grenzen?.max_mb || 25;
+  if (!f.size) return "Die Datei ist leer.";
+  if (f.size > max * 1048576) return `Zu groß (${groesse(f.size)}), höchstens ${max} MB.`;
+  if (!(hoch.grenzen?.typen || HOCH_TYPEN).includes(f.type) && !HOCH_ENDUNGEN.test(f.name || "")) return "Diesen Dateityp nimmt QuLSI nicht an.";
+  return null;
+}
+// XHR statt fetch, damit es einen Fortschritt gibt. Der App-Schlüssel geht nur im Header mit.
+function hochladen(datei, fortschritt) {
+  return new Promise((ok, nein) => {
+    const fd = new FormData();
+    fd.append("datei", datei, datei.name || "foto.jpg");
+    fd.append("ziel", "auto");
+    const x = new XMLHttpRequest();
+    x.open("POST", "/api/hochladen");
+    if (key) x.setRequestHeader("Authorization", "Bearer " + key);
+    x.upload.onprogress = (e) => { if (e.lengthComputable) fortschritt?.(e.loaded / e.total); };
+    x.onload = () => {
+      let d = {};
+      try { d = JSON.parse(x.responseText); } catch (e) {}
+      if (x.status === 401) { anmelden(true); return nein(new Error("Schlüssel fehlt")); }
+      if (x.status === 404 || x.status === 405) { hoch.fehlt = true; return nein(new Error("Hochladen kann die Box noch nicht, kommt mit dem nächsten Update.")); }
+      if (x.status >= 400) return nein(new Error(d.fehler || (typeof d.detail === "string" ? d.detail : "") || `Hochladen fehlgeschlagen (${x.status})`));
+      ok(d);
+    };
+    x.onerror = () => nein(new Error("Keine Verbindung zur Box."));
+    x.send(fd);
+  });
+}
+async function hochLaden() {
+  try {
+    const r = await holen("/api/hochladen?limit=10");
+    hoch.grenzen = r.grenzen || null; hoch.liste = r.dateien || []; hoch.fehlt = false;
+  } catch (e) { hoch.liste = hoch.liste || []; if (e.status === 404 || e.status === 405) hoch.fehlt = true; }
+}
+// Dateiauswahl. kamera=true öffnet auf dem Handy direkt die Kamera.
+function dateienWaehlen(kamera, weiter) {
+  const i = document.createElement("input");
+  i.type = "file";
+  if (kamera) { i.accept = "image/*"; i.setAttribute("capture", "environment"); } else { i.accept = HOCH_ACCEPT; i.multiple = true; }
+  i.hidden = true;
+  document.body.appendChild(i);
+  i.addEventListener("change", () => { const f = [...i.files]; i.remove(); if (f.length) weiter(f); });
+  i.click();
+}
+function anhangMenue(weiter) {
+  if (!beruehrung()) { dateienWaehlen(false, weiter); return; }
+  const m = document.createElement("div");
+  m.id = "anhang-menue";
+  m.innerHTML = `<div class="innen"><button type="button" data-kamera="1">${ic("kamera")}Foto aufnehmen</button>
+    <button type="button" data-kamera="0">${ic("datei")}Foto oder Datei wählen</button>
+    <button type="button" data-weg style="justify-content:center">Abbrechen</button></div>`;
+  document.body.appendChild(m);
+  m.addEventListener("click", (ev) => {
+    const b = ev.target.closest("button");
+    if (ev.target === m || b?.hasAttribute("data-weg")) { m.remove(); return; }
+    if (b) { m.remove(); dateienWaehlen(b.dataset.kamera === "1", weiter); }
+  });
+}
+// Ein Upload mit Anzeige-Zustand: {name, foto, url, anteil, eintrag, fehler, fertig}
+function hochStarten(f, neuZeichnen) {
+  const foto = istFoto(f);
+  const a = {name: f.name || "Foto", groesse: f.size, foto, url: foto ? URL.createObjectURL(f) : null, anteil: 0, eintrag: null, fehler: hochPruefen(f)};
+  if (a.fehler) melden(`${a.name}: ${a.fehler}`, true);
+  a.fertig = a.fehler ? Promise.resolve() : hochladen(f, (x) => { a.anteil = x; neuZeichnen(); })
+    .then((e) => { a.eintrag = e; a.anteil = 1; hoch.liste = [e, ...(hoch.liste || []).filter((x) => x.id !== e.id)]; })
+    .catch((e) => { a.fehler = e.message; melden(`${a.name}: ${e.message}`, true); })
+    .finally(neuZeichnen);
+  return a;
+}
+// Ziehen und Ablegen (Desktop) auf ein Element.
+function ablegenErlauben(el, weiter) {
+  if (!el) return;
+  let tiefe = 0;
+  const hatDateien = (ev) => [...(ev.dataTransfer?.types || [])].includes("Files");
+  el.addEventListener("dragenter", (ev) => { if (!hatDateien(ev)) return; ev.preventDefault(); tiefe++; el.classList.add("ziehen"); });
+  el.addEventListener("dragover", (ev) => { if (hatDateien(ev)) ev.preventDefault(); });
+  el.addEventListener("dragleave", () => { if (--tiefe <= 0) { tiefe = 0; el.classList.remove("ziehen"); } });
+  el.addEventListener("drop", (ev) => {
+    if (!hatDateien(ev)) return;
+    ev.preventDefault(); tiefe = 0; el.classList.remove("ziehen");
+    const f = [...ev.dataTransfer.files];
+    if (f.length) weiter(f);
+  });
+}
+
+// Anhänge im Gespräch (vor dem Senden)
+function anhaengeZeichnen() {
+  const el = $("anhaenge");
+  if (!el) return;
+  const liste = zustand.anhaenge || [];
+  el.innerHTML = liste.map((a, i) => `<div class="anhang ${a.fehler ? "fehler" : ""}" title="${esc(a.fehler || a.name)}">
+    ${a.url ? `<img src="${esc(a.url)}" alt="">` : ic("datei")}<span class="name">${esc(a.fehler || a.name)}</span>
+    ${!a.eintrag && !a.fehler ? `<span class="balken"><i style="width:${Math.round(a.anteil * 100)}%"></i></span>` : ""}
+    <button type="button" data-anhang-weg="${i}" aria-label="Anhang entfernen">×</button></div>`).join("");
+  el.querySelectorAll("[data-anhang-weg]").forEach((b) => b.addEventListener("click", () => {
+    const [a] = zustand.anhaenge.splice(Number(b.dataset.anhangWeg), 1);
+    if (a?.url && !a.eintrag) URL.revokeObjectURL(a.url);
+    anhaengeZeichnen();
+  }));
+  sendenPruefen();
+}
+function sendenPruefen() {
+  const t = $("text"), s = $("senden");
+  if (!t || !s) return;
+  const liste = zustand.anhaenge || [];
+  const laeuft = liste.some((a) => !a.eintrag && !a.fehler);
+  s.disabled = laeuft || !(t.value.trim() || liste.some((a) => a.eintrag));
+}
+function anhaengeDazu(dateien) {
+  zustand.anhaenge = zustand.anhaenge || [];
+  for (const f of dateien.slice(0, 10)) zustand.anhaenge.push(hochStarten(f, anhaengeZeichnen));
+  anhaengeZeichnen();
+}
+
+// Bereich „Hochladen“ im Gedächtnis
+function hochBereich() {
+  const statusChip = (e) => e.status === "abgelehnt" ? `<span class="chip warn">Abgelehnt</span>`
+    : e.status === "wartet" ? `<span class="chip">Wird eingeordnet</span>` : `<span class="chip gut">Im Gedächtnis</span>`;
+  const zeit = (iso) => { const d = new Date(iso); return isNaN(d) ? "" : d.toLocaleString("de-DE", {day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit"}); };
+  const laufend = hoch.aktiv.filter((a) => !a.eintrag).map((a) => `<div class="zeile">${a.url ? `<img src="${esc(a.url)}" alt="">` : `<span class="sym">${ic("datei")}</span>`}
+    <span class="txt"><b>${esc(a.name)}</b><small>${a.fehler ? `<span class="warn">${esc(a.fehler)}</span>` : `Wird hochgeladen … ${Math.round(a.anteil * 100)} %`}</small></span></div>`);
+  const fertig = (hoch.liste || []).slice(0, 10).map((e) => `<div class="zeile">${e.art === "foto" && e.vorschau ? `<img data-quelle="${esc(e.vorschau)}" alt="">` : `<span class="sym">${ic(e.art === "foto" ? "kamera" : "datei")}</span>`}
+    <span class="txt"><b>${esc(e.name)}</b><small>${[e.groesse ? groesse(e.groesse) : "", zeit(e.zeit), e.hinweis ? esc(e.hinweis) : ""].filter(Boolean).join(" · ")}</small></span>${statusChip(e)}</div>`);
+  return `<h2 class="abschnitt">Hochladen</h2>
+    <div class="ablage" id="ablage">
+      <div>${beruehrung() ? "Fotos und Dokumente fürs Gedächtnis" : "Fotos und Dokumente hierher ziehen oder auswählen"}</div>
+      <div class="reihe">${beruehrung() ? `<button class="knopf" type="button" id="hoch-kamera">${ic("kamera")}Foto aufnehmen</button>` : ""}
+        <button class="knopf hell" type="button" id="hoch-waehlen">${ic("klammer")}${beruehrung() ? "Auswählen" : "Dateien wählen"}</button></div>
+      <div class="klein" style="color:var(--zweit)">Bis ${hoch.grenzen?.max_mb || 25} MB: Fotos, PDF, Text, Word, Excel. QuLSI behandelt Inhalte aus Dateien wie Inhalte von außen und fragt danach vor Aktionen nach.</div>
+    </div>
+    ${hoch.fehlt ? `<p class="hinweis">Hochladen kann die Box noch nicht, kommt mit dem nächsten Update.</p>` : ""}
+    ${laufend.length || fertig.length ? `<div class="gruppe hoch-liste">${[...laufend, ...fertig].join("")}</div>` : ""}`;
+}
+function hochNeu() {
+  const b = $("hoch-bereich");
+  if (!b) return;
+  b.innerHTML = hochBereich();
+  const weiter = (dateien) => { for (const f of dateien.slice(0, 20)) hoch.aktiv.unshift(hochStarten(f, hochNeu)); hochNeu(); };
+  $("hoch-kamera")?.addEventListener("click", () => dateienWaehlen(true, weiter));
+  $("hoch-waehlen").addEventListener("click", () => dateienWaehlen(false, weiter));
+  ablegenErlauben($("ablage"), weiter);
+  bilderLaden(b);
+}
+
+// ---------------------------------------------------------------- Gespräch
+const VORSCHLAEGE = ["Was steht heute an?", "Wo sind meine Schlüssel?", "Fasse meine neuen Mails zusammen", "Erinnere mich morgen um 9 an den Müll"];
+ANSICHTEN.chat = (el) => {
+  const leer = !zustand.nachrichten.length;
+  const belastet = zustand.nachrichten.some((n) => n.belastet);
+  el.innerHTML = `<div class="chat">
+    <div class="gespraech-kopf"><b>Gespräch</b><button type="button" class="knopf klein" id="neu" ${leer ? "hidden" : ""}>${ic("plus")}Neues Gespräch</button></div>
+    <div id="chat-hinweis"></div>
+    ${leer ? `<div class="leerchat"><svg class="marke" viewBox="0 0 382 46"><use href="#wortmarke"/></svg>Was möchtest du wissen oder erledigen?</div>
+      <div class="vorschlaege">${VORSCHLAEGE.map((v) => `<button type="button" data-v="${esc(v)}">${esc(v)}</button>`).join("")}</div>` : ""}
+    <div id="verlauf"></div>
+    <div id="chat-freigaben"></div>
+    <form class="eingabe" id="eingabe" autocomplete="off">
+      <div class="anhaenge" id="anhaenge"></div>
+      <button type="button" class="rund" id="anhang" title="Foto oder Datei anhängen" aria-label="Foto oder Datei anhängen">${ic("klammer")}</button>
+      <button type="button" class="rund" id="mic" title="Sprechen" aria-label="Sprechen">${ic("mic")}</button>
+      <textarea id="text" rows="1" placeholder="Nachricht an QuLSI" enterkeyhint="send"></textarea>
+      <button class="rund senden" id="senden" title="Senden" aria-label="Senden" disabled>${ic("hoch")}</button>
+    </form></div>`;
+  for (const n of zustand.nachrichten) blase(n);
+  chatHinweis();
+  chatFreigaben();
+  el.querySelectorAll(".vorschlaege button").forEach((b) => b.addEventListener("click", () => senden(b.dataset.v)));
+  const t = $("text");
+  t.addEventListener("input", () => { t.style.height = "auto"; t.style.height = t.scrollHeight + "px"; sendenPruefen(); });
+  t.addEventListener("paste", (ev) => { const f = [...(ev.clipboardData?.files || [])]; if (f.length) { ev.preventDefault(); anhaengeDazu(f); } });
+  t.addEventListener("keydown", (ev) => { if (ev.key === "Enter" && !ev.shiftKey && !ev.isComposing) { ev.preventDefault(); $("eingabe").requestSubmit(); } });
+  $("eingabe").addEventListener("submit", (ev) => {
+    ev.preventDefault();
+    const v = t.value.trim(), liste = zustand.anhaenge || [];
+    if (liste.some((a) => !a.eintrag && !a.fehler)) return;  // noch beim Hochladen
+    const anh = liste.filter((a) => a.eintrag);
+    if (!v && !anh.length) return;
+    t.value = ""; t.style.height = "auto";
+    zustand.anhaenge = [];
+    anhaengeZeichnen();
+    senden(v, anh);
+  });
+  $("mic").addEventListener("click", sprechen);
+  $("anhang").addEventListener("click", () => anhangMenue(anhaengeDazu));
+  ablegenErlauben(el.querySelector(".chat"), anhaengeDazu);
+  anhaengeZeichnen();
+  if (!hoch.liste) hochLaden();
+  $("neu")?.addEventListener("click", () => { zustand.verlauf = []; zustand.nachrichten = []; zustand.gespraech++; route(); melden("Neues Gespräch"); });
+  if (matchMedia("(min-width:960px)").matches) t.focus();
+  window.scrollTo(0, document.body.scrollHeight);
+};
+// Sicheres Markdown für Antworten: erst alles escapen, dann nur fett, kursiv, Code, Listen,
+// Überschriften und http(s)-Links erzeugen. Rohes HTML aus der Antwort erscheint nie als HTML.
+function mdInline(t) {
+  const codes = [];
+  t = esc(t).replace(/`([^`\n]+)`/g, (_, c) => `\u0000${codes.push(c) - 1}\u0000`);
+  t = t.replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)/g, (_, txt, url) => `<a href="${url}" target="_blank" rel="noopener noreferrer">${txt}</a>`)
+    .replace(/\*\*([^*\n]+)\*\*|__([^_\n]+)__/g, (_, a, b) => `<strong>${a ?? b}</strong>`)
+    .replace(/(^|[^*\w])\*([^*\s][^*\n]*?)\*(?!\w)/g, "$1<em>$2</em>")
+    .replace(/(^|[^_\w])_([^_\s][^_\n]*?)_(?!\w)/g, "$1<em>$2</em>");
+  return t.replace(/\u0000(\d+)\u0000/g, (_, i) => `<code>${codes[i]}</code>`);
+}
+function markdown(text) {
+  const zeilen = String(text ?? "").replace(/\r/g, "").split("\n");
+  const out = [];
+  let liste = null, absatz = [];
+  const absatzEnde = () => { if (absatz.length) { out.push(`<p>${absatz.map(mdInline).join("<br>")}</p>`); absatz = []; } };
+  const punkt = (x) => `<li>${mdInline(x.text)}${x.kinder.length ? `<ul>${x.kinder.map((k) => `<li>${mdInline(k)}</li>`).join("")}</ul>` : ""}</li>`;
+  const listeEnde = () => { if (liste) { out.push(`<${liste.typ}>${liste.punkte.map(punkt).join("")}</${liste.typ}>`); liste = null; } };
+  for (let i = 0; i < zeilen.length; i++) {
+    const z = zeilen[i];
+    if (/^\s*```/.test(z)) {
+      absatzEnde(); listeEnde();
+      const code = [];
+      while (++i < zeilen.length && !/^\s*```/.test(zeilen[i])) code.push(zeilen[i]);
+      out.push(`<pre><code>${esc(code.join("\n"))}</code></pre>`);
+      continue;
+    }
+    let m;
+    if ((m = z.match(/^\s*#{1,6}\s+(.*)$/))) { absatzEnde(); listeEnde(); out.push(`<h4>${mdInline(m[1])}</h4>`); continue; }
+    if ((m = z.match(/^\s*[-*+•]\s+(.*)$/)) || (m = z.match(/^\s*\d+[.)]\s+(.*)$/))) {
+      const typ = /^\s*\d/.test(z) ? "ol" : "ul";
+      absatzEnde();
+      if (liste && /^\s{2,}/.test(z)) { liste.punkte[liste.punkte.length - 1].kinder.push(m[1]); continue; }  // Unterpunkt
+      if (liste && liste.typ !== typ) listeEnde();
+      (liste ||= {typ, punkte: []}).punkte.push({text: m[1], kinder: []});
+      continue;
+    }
+    if (!z.trim()) { absatzEnde(); listeEnde(); continue; }
+    if (/^\s*(-{3,}|\*{3,}|_{3,})\s*$/.test(z)) { absatzEnde(); listeEnde(); continue; }
+    listeEnde();
+    absatz.push(z.trim());
+  }
+  absatzEnde(); listeEnde();
+  return out.join("");
+}
+// Für die Sprachausgabe: Markdown-Zeichen weg, Text bleibt.
+function ohneMarkdown(text) {
+  return String(text ?? "").replace(/```[\s\S]*?```/g, " ").replace(/`([^`]+)`/g, "$1")
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1").replace(/^\s*#{1,6}\s+/gm, "").replace(/^\s*[-*+•]\s+/gm, "")
+    .replace(/\*\*(.+?)\*\*/g, "$1").replace(/(^|\W)__(.+?)__(?=\W|$)/g, "$1$2").replace(/\*(\S.*?)\*/g, "$1")
+    .replace(/(^|\W)_(\S.*?)_(?=\W|$)/g, "$1$2").replace(/\*+/g, "").replace(/\n{2,}/g, ".\n").replace(/([.!?:])\.\n/g, "$1\n");
+}
+// Erkannte Anweisungen in fremden Inhalten (Mail, Web, Datei): rot und in Klartext über der Antwort.
+function warnungenHtml(w) {
+  const liste = [...new Set((Array.isArray(w) ? w : w ? [w] : []).filter((x) => typeof x === "string" && x.trim()))];
+  return liste.map((t) => `<div class="warnung-rot" role="alert">${ic("sicherheit")}<span>${esc(t)}</span></div>`).join("");
+}
+function blaseElement(n) {
+  const d = document.createElement("div");
+  d.className = "msg " + n.rolle + (n.wartet ? " tippt" : "");
+  if (n.wartet) d.innerHTML = "<span></span><span></span><span></span>";
+  else if (n.rolle === "qulsi") d.innerHTML = warnungenHtml(n.warnungen) + markdown(n.text);
+  else {
+    if (n.anhaenge?.length) {
+      const fotos = n.anhaenge.filter((a) => a.url), andere = n.anhaenge.filter((a) => !a.url);
+      d.innerHTML = (fotos.length ? `<div class="bilder">${fotos.map((a) => `<img src="${esc(a.url)}" alt="${esc(a.name)}">`).join("")}</div>` : "")
+        + andere.map((a) => `<span class="dateichip">${ic("datei")}${esc(a.name)}</span>`).join("") + (andere.length ? "<br>" : "");
+    }
+    d.append(document.createTextNode(n.text));
+  }
+  if (n.meta && !n.wartet) {
+    const m = document.createElement("details"); m.className = "meta";
+    m.innerHTML = `<summary aria-label="Details zur Antwort">Details</summary>`;
+    m.append(n.meta); d.appendChild(m);
+  }
+  return d;
+}
+function blase(n) {
+  const v = $("verlauf");
+  if (!v) return;
+  document.querySelectorAll(".leerchat,.vorschlaege").forEach((x) => x.remove());
+  $("neu")?.removeAttribute("hidden");
+  n.el = blaseElement(n);
+  v.appendChild(n.el);
+  window.scrollTo({top: document.body.scrollHeight, behavior: "smooth"});
+  return n.el;
+}
+// Antwort an ihren Platz (direkt unter der Frage) schreiben.
+function fuellen(n, werte) {
+  Object.assign(n, werte, {wartet: false});
+  if (n.el?.isConnected) { const neu = blaseElement(n); n.el.replaceWith(neu); n.el = neu; }
+  chatHinweis();
+}
+function metaText(a) {
+  const route = {system: "sofort", klein: "kleines Modell", standard: "Standardmodell", gross: "großes Modell", vision: "Bildmodell"}[a.route] || a.route;
+  const teile = [route];
+  if (a.werkzeuge && a.werkzeuge.length) teile.push([...new Set(a.werkzeuge.map(werkzeugName))].join(", "));
+  return teile.join(" · ");
+}
+// Warteschlange: Fragen gehen nacheinander raus, jede Antwort landet direkt unter ihrer Frage
+// und kennt die Antworten davor.
+let kette = Promise.resolve();
+const nachher = (fn) => (kette = kette.then(fn, fn));
+function senden(text, anh = []) {
+  if (!text) text = anh.some((a) => a.foto) ? "Was ist das?" : "Schau dir bitte die Datei an.";
+  const ich = {rolle: "ich", text, anhaenge: anh.map((a) => ({name: a.name, url: a.url}))}, antwort = {rolle: "qulsi", wartet: true};
+  const ids = anh.map((a) => a.eintrag.id);
+  zustand.nachrichten.push(ich, antwort);
+  blase(ich); blase(antwort);
+  const gespraech = zustand.gespraech;
+  nachher(async () => {
+    if (gespraech !== zustand.gespraech) return;  // inzwischen "Neues Gespräch"
+    try {
+      const a = await (await api("/api/chat", {json: {nachricht: text, verlauf: zustand.verlauf.slice(-12), ...(ids.length ? {anhaenge: ids} : {})}})).json();
+      if (gespraech !== zustand.gespraech) return;
+      zustand.verlauf.push({role: "user", content: text + (anh.length ? ` [Anhang: ${anh.map((x) => x.name).join(", ")}]` : "")}, {role: "assistant", content: a.antwort});
+      const neuBelastet = a.belastet && !zustand.nachrichten.some((x) => x.belastet);
+      fuellen(antwort, {text: a.antwort, meta: metaText(a), belastet: a.belastet, warnungen: a.warnungen});
+      if (neuBelastet && aktuelleAnsicht() === "chat") route();
+      aktualisieren();
+    } catch (e) {
+      fuellen(antwort, {text: "Das hat nicht geklappt: " + e.message});
+    }
+  });
+}
+// Push-to-talk: einmal tippen startet, nochmal tippen schickt ab.
+let rec = null;
+async function sprechen() {
+  if (rec) { rec.stop(); return; }
+  vorlesenStoppen();
+  if (!navigator.mediaDevices) { melden("Das Mikrofon braucht eine sichere Verbindung (HTTPS, z. B. über Tailscale).", true); return; }
+  let strom;
+  try { strom = await navigator.mediaDevices.getUserMedia({audio: {noiseSuppression: true, echoCancellation: true}}); }
+  catch (e) { melden("Kein Zugriff aufs Mikrofon.", true); return; }
+  const stuecke = [];
+  rec = new MediaRecorder(strom);
+  rec.ondataavailable = (e) => stuecke.push(e.data);
+  rec.onstop = async () => {
+    strom.getTracks().forEach((t) => t.stop());
+    $("mic")?.classList.remove("an");
+    const blob = new Blob(stuecke, {type: rec.mimeType});
+    rec = null;
+    const fd = new FormData();
+    fd.append("audio", blob, "sprache." + (blob.type.includes("mp4") ? "m4a" : "webm"));
+    const ich = {rolle: "ich", text: "🎙 …"}, antwort = {rolle: "qulsi", wartet: true};
+    zustand.nachrichten.push(ich, antwort);
+    blase(ich); blase(antwort);
+    nachher(async () => {
+      try {
+        const a = await (await api("/api/stimme", {method: "POST", body: fd})).json();
+        fuellen(ich, {text: a.text || "(nicht verstanden)"});
+        fuellen(antwort, {text: a.antwort, meta: metaText(a), belastet: a.belastet, warnungen: a.warnungen});
+        if (zustand.einst?.stimme?.vorlesen !== false) vorlesen(a.antwort);
+        aktualisieren();
+      } catch (e) { fuellen(antwort, {text: "Das hat nicht geklappt: " + e.message}); }
+    });
+  };
+  rec.start();
+  $("mic").classList.add("an");
+}
+// Stücke zum Vorlesen. Das erste kurz (bis 60 Zeichen), damit der Ton schnell kommt. Danach dürfen die Stücke
+// wachsen, aber nur so weit, dass das nächste fertig erzeugt ist, bevor das bisher Gesprochene ausklingt: die
+// Stimme rechnet etwa 0,6- bis 0,7-mal so lange wie das Abspielen dauert, also kommen je Stück rund 0,4 der
+// bisherigen Länge dazu, höchstens 150 Zeichen. Kurze Sätze werden gebündelt, lange an einem Komma geteilt
+// (an einem Leerzeichen nur beim ersten Stück oder wenn ein Satz ohne Komma länger als 150 Zeichen ist).
+function saetze(text) {
+  const teile = (text || "").replace(/\s+/g, " ").match(/[^.!?…]+[.!?…]*["»“]?\s*/g) || [];
+  const out = [];
+  for (const t of teile) {  // sehr kurze Stücke ("Ok.") an den vorigen Satz hängen
+    if (out.length && t.trim().length < 12) out[out.length - 1] += t;
+    else out.push(t);
+  }
+  const schnitt = (t, max, erstes) => {
+    const k = [...t.matchAll(/[,;:–—] /g)].map((m) => m.index + 1)
+      .filter((i) => i >= 12 && i <= max && t.length - i >= 12).pop();
+    if (k != null || (t.length <= 150 && !erstes)) return k ?? null;
+    const l = t.lastIndexOf(" ", erstes ? max : 150);
+    return l >= 12 && t.length - l >= 12 ? l : null;
+  };
+  const rest = out.map((t) => t.trim()).filter(Boolean), liste = [];
+  let grenze = 60, summe = 0;
+  while (rest.length) {
+    let t = rest.shift();
+    if (t.length > grenze) {
+      const k = schnitt(t, grenze, !liste.length);
+      if (k) { rest.unshift(t.slice(k).trim()); t = t.slice(0, k).trim(); }
+    }
+    while (rest.length && (t + " " + rest[0]).length <= grenze) t += " " + rest.shift();
+    if (rest.length && grenze - t.length > 20) {  // passt der nächste Satz nicht ganz: wenigstens bis zum Komma
+      const k = schnitt(rest[0], grenze - t.length - 1, false);
+      if (k) { t += " " + rest[0].slice(0, k).trim(); rest[0] = rest[0].slice(k).trim(); }
+    }
+    liste.push(t);
+    summe += t.length;
+    grenze = Math.min(150, Math.max(40, Math.round(0.43 * summe + liste[0].length)));
+  }
+  return liste;
+}
+// Vorlesen. iOS lässt Ton nur nach einem Tippen zu. Deshalb gibt es ein einziges Audio-Element, das beim
+// ersten Tippen (Mikrofon, Probehören, irgendwo auf der Seite) mit Stille entsperrt wird und dann alle Sätze
+// spielt. Ein Satz, der nicht kommt, wird übersprungen, statt den Rest abzubrechen.
+const sprecher = new Audio();
+sprecher.preload = "auto";
+sprecher.setAttribute("playsinline", "");
+let sprecherFrei = false, stilleUrl = null, wartetAufTipp = null, vorleseLauf = 0, fortgesetzt = 0;
+function stille() {
+  if (stilleUrl) return stilleUrl;
+  const n = 800, b = new Uint8Array(44 + n), v = new DataView(b.buffer);
+  const str = (o, t) => [...t].forEach((c, i) => (b[o + i] = c.charCodeAt(0)));
+  str(0, "RIFF"); v.setUint32(4, 36 + n, true); str(8, "WAVEfmt "); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, 8000, true); v.setUint32(28, 8000, true); v.setUint16(32, 1, true); v.setUint16(34, 8, true); str(36, "data"); v.setUint32(40, n, true);
+  b.fill(128, 44);
+  return (stilleUrl = URL.createObjectURL(new Blob([b], {type: "audio/wav"})));
+}
+// Lückenlos: die Stücke laufen über Web Audio direkt hintereinander (das Audio-Element macht zwischen zwei
+// Dateien jedes Mal eine Pause). audioSession "playback": auf dem iPhone auch bei stummgeschaltetem Klingelton.
+let tonKontext = null;
+function kontext() {
+  const K = window.AudioContext || window.webkitAudioContext;
+  if (!tonKontext && K) { try { tonKontext = new K(); } catch (e) {} }
+  return tonKontext;
+}
+function kontextEntsperren() {
+  try {
+    if (navigator.audioSession) navigator.audioSession.type = "playback";
+    const k = kontext();
+    if (!k) return;
+    if (k.state !== "running") k.resume();
+    const q = k.createBufferSource();
+    q.buffer = k.createBuffer(1, 1, 22050);
+    q.connect(k.destination);
+    q.start(0);
+  } catch (e) {}
+}
+// Muss direkt in einem Tipp-Ereignis laufen (kein await davor).
+function tonEntsperren() {
+  kontextEntsperren();
+  if (wartetAufTipp) { const w = wartetAufTipp; wartetAufTipp = null; fortgesetzt = Date.now(); w(); return; }
+  if (sprecherFrei) return;
+  try {
+    if (!sprecher.src || sprecher.src === stilleUrl) sprecher.src = stille();
+    const p = sprecher.play();
+    sprecherFrei = true;
+    p?.catch(() => { sprecherFrei = false; });
+  } catch (e) {}
+}
+document.addEventListener("pointerdown", tonEntsperren, true);
+document.addEventListener("keydown", tonEntsperren, true);
+function stimmeStatus(text, stopp = true) {
+  let el = $("stimme-status");
+  if (!text) { el?.remove(); return; }
+  if (!el) {
+    el = document.createElement("button");
+    el.id = "stimme-status"; el.type = "button";
+    el.addEventListener("click", () => { if (Date.now() - fortgesetzt > 600) vorlesenStoppen(); });
+    document.body.appendChild(el);
+  }
+  el.innerHTML = `<span class="punkt-an"></span>${esc(text)}${stopp ? `<span class="weg">Stopp</span>` : ""}`;
+}
+let geplant = [];  // laufende Web-Audio-Stücke
+function vorlesenStoppen() {
+  vorleseLauf++;
+  try { sprecher.pause(); } catch (e) {}
+  geplant.forEach((q) => { try { q.stop(); } catch (e) {} });
+  geplant = [];
+  wartetAufTipp = null;
+  stimmeStatus(null);
+}
+// Ein Satz als Audio. Kaltstart der Stimme dauert bis ~25 s, deshalb lange warten und einmal wiederholen.
+async function tts(satz) {
+  for (let versuch = 0; versuch < 2; versuch++) {
+    const ab = new AbortController(), t = setTimeout(() => ab.abort(), 60000);
+    try { return await (await api("/api/tts", {json: {text: satz}, signal: ab.signal})).blob(); }
+    catch (e) { if (e.status === 401 || e.status === 400) throw e; }
+    finally { clearTimeout(t); }
+  }
+  return null;
+}
+function abspielen(blob, lauf) {
+  return new Promise((fertig) => {
+    const url = URL.createObjectURL(blob);
+    const ende = () => { sprecher.onended = sprecher.onerror = null; URL.revokeObjectURL(url); fertig(); };
+    sprecher.onended = sprecher.onerror = ende;
+    sprecher.src = url;
+    const los = () => sprecher.play().then(() => { sprecherFrei = true; }).catch((e) => {
+      if (e?.name === "NotAllowedError" && lauf === vorleseLauf) {
+        sprecherFrei = false;
+        stimmeStatus("Antwort anhören: hier tippen", false);
+        wartetAufTipp = () => { stimmeStatus("QuLSI spricht"); los(); };
+      } else ende();
+    });
+    los();
+  });
+}
+// Erzeugt werden alle Stücke gleich hintereinander (der Sprachdienst rechnet ohnehin eins nach dem anderen),
+// nicht erst, wenn das vorige spielt. Abgespielt wird, sobald ein Stück da ist; mit Web Audio lückenlos
+// direkt hinter das vorige geplant, sonst (Ton noch nicht entsperrt) über das Audio-Element.
+async function vorlesen(text) {
+  vorlesenStoppen();
+  const lauf = ++vorleseLauf;
+  const liste2 = saetze(ohneMarkdown(text));
+  if (!liste2.length) return;
+  const langsam = setTimeout(() => lauf === vorleseLauf && stimmeStatus("Stimme wird geladen…"), 1500);
+  stimmeStatus(null);
+  let kette = Promise.resolve();
+  const audios = liste2.map((satz) => {
+    const p = kette.then(() => (lauf === vorleseLauf ? tts(satz) : null));
+    kette = p.catch(() => {});
+    return p;
+  });
+  audios.forEach((p) => p.catch(() => {}));
+  let gespielt = 0, ende = 0;
+  const warten = (ms) => new Promise((r) => setTimeout(r, ms));
+  try {
+    for (let i = 0; i < audios.length; i++) {
+      let audio = null;
+      try { audio = await audios[i]; } catch (e) { if (e.status === 401) throw e; }
+      if (lauf !== vorleseLauf) return;
+      if (!audio) continue;  // Stück übersprungen
+      clearTimeout(langsam);
+      stimmeStatus("QuLSI spricht");
+      const k = tonKontext;
+      let puffer = null;
+      if (k && k.state === "running") {
+        try { puffer = await k.decodeAudioData(await audio.arrayBuffer()); } catch (e) { puffer = null; }
+        if (lauf !== vorleseLauf) return;
+      }
+      if (puffer) {
+        const q = k.createBufferSource();
+        q.buffer = puffer;
+        q.connect(k.destination);
+        const start = Math.max(k.currentTime + 0.03, ende);
+        q.start(start);
+        ende = start + puffer.duration;
+        geplant.push(q);
+        q.onended = () => { geplant = geplant.filter((x) => x !== q); };
+      } else {
+        while (ende && k && k.currentTime < ende && lauf === vorleseLauf) await warten(50);
+        ende = 0;
+        await abspielen(audio, lauf);
+      }
+      gespielt++;
+      if (lauf !== vorleseLauf) return;
+    }
+    while (ende && tonKontext && tonKontext.currentTime < ende && lauf === vorleseLauf) await warten(100);
+    if (!gespielt) melden("Die Stimme antwortet gerade nicht. Versuch es gleich noch einmal.", true);
+  } catch (e) { melden("Vorlesen nicht möglich: " + e.message, true); }
+  finally { clearTimeout(langsam); if (lauf === vorleseLauf) stimmeStatus(null); }
+}
+
+// ---------------------------------------------------------------- Gedächtnis
+const isoTag = (d) => d.toLocaleDateString("sv-SE");
+ANSICHTEN.gedaechtnis = (el) => {
+  const s = zustand.gedaechtnis;
+  const kachel = (zahl, name) => `<div class="zahl-kachel"><b>${zahl ?? "–"}</b><span>${name}</span></div>`;
+  el.innerHTML = `
+    <h1 class="titel">Gedächtnis</h1>
+    <p class="unter">Alles, was QuLSI sich gemerkt hat. Bleibt auf deiner Box.</p>
+    ${memchipBanner(zustand.einst?.gedaechtnis?.memchip)}
+    <form class="suche" id="suche">${ic("suche")}<input id="frage" placeholder="z. B. Was war letzte Woche mit Max?" enterkeyhint="search"></form>
+    <div id="treffer"></div>
+    <div class="zahlen">${kachel(s?.erinnerungen, "Erinnerungen")}${kachel(s?.personen, "Personen")}${kachel(s?.orte, "Orte")}
+      ${kachel(s?.fotos, "Fotos")}${kachel(s?.projekte, "Projekte")}${kachel(s?.beziehungen, "Verbindungen")}</div>
+    <div id="hoch-bereich"></div>
+    <h2 class="abschnitt">Verlauf</h2>
+    <div id="tag-liste">${lade()}</div>
+    <a class="zeile" href="#/einstellungen/gedaechtnis" style="padding-left:4px">${ic("chip")}<span class="txt"><b>Memchip und Organisator</b><small>Sicherung, Verschlüsselung, Einsortieren</small></span>${ic("pfeil", "i pfeil")}</a>`;
+  verlaufLaden();
+  hochNeu();
+  hochLaden().then(hochNeu);
+  $("suche").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const f = $("frage").value.trim();
+    if (!f) return;
+    $("treffer").innerHTML = `<div class="karte">${lade()}</div>`;
+    try {
+      const r = await holen("/api/gedaechtnis/finden?anzahl=20&frage=" + encodeURIComponent(f));
+      const verstanden = Object.entries(r.verstanden || {}).map(([k, v]) => `<span class="chip">${esc(k)}: ${esc([].concat(v).join(", "))}</span>`).join(" ");
+      $("treffer").innerHTML = `<div class="karte"><h3>${ic("suche")}${r.anzahl} Treffer</h3>${verstanden ? `<div class="reihe" style="margin-bottom:8px">${verstanden}</div>` : ""}
+        ${r.treffer.length ? r.treffer.map((t) => `<div class="treffer">${t.bild ? `<img data-quelle="${esc(t.bild)}" alt="">` : ""}<div style="min-width:0">
+          <div>${esc(t.text)}</div><div class="klein">${esc(t.zeit)}${t.ort ? " · " + esc(t.ort) : ""}${t.personen ? " · " + esc(t.personen.join(", ")) : ""}</div></div></div>`).join("")
+          : `<div class="leer">${esc(r.hinweis || "Nichts gefunden")}</div>`}</div>`;
+      bilderLaden($("treffer"));
+    } catch (e) { $("treffer").innerHTML = `<div class="karte"><div class="leer">${esc(e.message)}</div></div>`; }
+  });
+};
+function memchipBanner(m) {
+  if (!m || !m.verschluesselung || m.verschluesselung === "an") return "";
+  const rot = m.verschluesselung === "fehlt";
+  return `<div class="banner ${rot ? "rot" : "gelb"}" role="alert">${ic("sicherheit")}<div>
+    <b>${rot ? "Memchip-Sicherung gesperrt" : "Memchip nicht verschlüsselt"}</b>${esc(m.warnung || "")}
+    <div class="befehl" style="margin-top:8px"><code>.env: MEMCHIP_PASSWORT=…</code></div></div></div>`;
+}
+
+// ---------------------------------------------------------------- Verlauf (Gedächtnis-Timeline)
+// Zeigt, was QuLSI weiß oder getan hat: ein Eintrag pro Ereignis, in normalen Sätzen, nach Tagen,
+// neueste oben. Freigaben, Sicherheit und Technik landen im zugeklappten „Protokoll“.
+const PROTOKOLL_ARTEN = new Set(["warnung", "freigabe", "sicherheit", "konto", "offline", "online", "memchip", "organisiert", "werkzeug_lesen", "kalender_sync"]);
+const ART_LABEL = {termin: "Termin", episodisch: "Erinnerung", semantisch: "Wissen", praeferenz: "Vorliebe", aufgabe: "Aufgabe",
+  vergessen: "Gelöscht", agent: "Agent", rueckblick: "Rückblick"};
+const verlauf = {tage: 7, daten: null, protokollOffen: false};
+function woerter(t) { return new Set(String(t).toLowerCase().replace(/[^a-zäöüß0-9 ]/g, " ").split(/\s+/).filter((w) => w.length > 2)); }
+function aehnlich(a, b) {
+  let n = 0;
+  for (const w of a) if (b.has(w)) n++;
+  return Math.min(a.size, b.size) >= 5 && n / Math.min(a.size, b.size) >= 0.7;
+}
+function zeitTeile(z) {
+  const m = String(z).match(/(?:(\d\d)\.(\d\d)\.(\d{4}) )?(\d\d:\d\d)/);
+  if (!m) return {datum: isoTag(new Date()), uhr: String(z)};
+  return {datum: m[1] ? `${m[3]}-${m[2]}-${m[1]}` : isoTag(new Date()), uhr: m[4]};
+}
+function eintragDeuten(e) {
+  const art = String(e.art || ""), text = String(e.text || "").trim();
+  if (PROTOKOLL_ARTEN.has(art)) return {protokoll: true, label: {warnung: "Warnung", freigabe: "Freigabe", sicherheit: "Sicherheit", konto: "Konto", memchip: "Memchip"}[art] || "System", text};
+  if (art === "aktion") {
+    const m = text.match(/^([a-z_]+(?:\.[a-z_]+)+)( nach Freigabe)?:\s*(.*)$/s);
+    if (!m) return {protokoll: true, label: "System", text};
+    const [, tool, , rest] = m;
+    if (/calendar\.create$/.test(tool)) return null;               // steht schon als „Termin eingetragen“ drin
+    if (/(^|\.)(read|search|list|find|timeline|status|get_state|where)$/.test(tool)) return {protokoll: true, label: werkzeugName(tool), text: rest};
+    if (tool === "memory.remember") {
+      const nur = rest.match(/^Gemerkt\s*\((\w+)\)\.?$/);
+      return {label: "Gemerkt", text: nur ? `Etwas gemerkt (${ART_LABEL[nur[1]] || nur[1]})` : rest.replace(/^Gemerkt:?\s*/, ""), schwach: !!nur};
+    }
+    if (tool === "tasks.create") return {label: "Aufgabe", text: rest.replace(/^(Angelegt|Aufgabe angelegt):?\s*/, "")};
+    return {label: werkzeugName(tool), text: rest};
+  }
+  if (/^(Tages)?[Rr]ückblick\b/.test(text) || (art === "agent" && /rückblick/i.test(text)))
+    return {label: "Rückblick", text: text.replace(/^(Tages)?[Rr]ückblick[^:]*:\s*(Notiert:\s*)?/, "")};
+  if (/^Morgenbriefing:?/.test(text)) return {label: "Briefing", text: text.replace(/^Morgenbriefing:?\s*/, "")};
+  if (art === "termin") return {label: "Termin", text: text.replace(/^Termin eingetragen:\s*/, "Eingetragen: ")};
+  return {label: ART_LABEL[art] || (art ? "Agent" : ""), text};
+}
+function verlaufAufbereiten(roh) {
+  const inhalt = [], protokoll = [];
+  const liste = (Array.isArray(roh) ? roh : roh?.treffer || []).map((e) => ({...e, ...zeitTeile(e.zeit)}));
+  for (const e of liste) {
+    const d = eintragDeuten(e);
+    if (!d) continue;
+    const x = {...e, ...d, w: woerter(d.text)};
+    if (d.protokoll) { protokoll.push(x); continue; }
+    // Doppelte am selben Tag weglassen (Rückblick als Erinnerung, Agent und Notiz; „Gemerkt“ neben der Erinnerung selbst).
+    const dup = inhalt.find((y) => y.datum === x.datum && ((x.schwach !== y.schwach && y.uhr === x.uhr) || aehnlich(x.w, y.w)));
+    if (dup) {
+      if (dup.schwach && !x.schwach) Object.assign(dup, x, {label: "Gemerkt · " + x.label});
+      else if (x.schwach && !dup.schwach) dup.label = "Gemerkt · " + dup.label;
+      else if (x.label === "Rückblick") dup.label = "Rückblick";
+      continue;
+    }
+    inhalt.push(x);
+  }
+  const neu = (a, b) => (b.datum + b.uhr).localeCompare(a.datum + a.uhr);
+  return {inhalt: inhalt.sort(neu), protokoll: protokoll.sort(neu)};
+}
+function verlaufZeile(e) {
+  const text = e.label === "Rückblick" ? e.text.replace(/^Heute,? \S+ \d\d\.\d\d\.\d{4}:\s*/, "") : e.text;
+  return `<li><span class="zeit">${esc(e.uhr)}</span><span style="min-width:0">${esc(text)}${e.label ? `<div class="klein">${esc(e.label)}</div>` : ""}</span></li>`;
+}
+function tagTitel(iso) {
+  const heute = isoTag(new Date()), d = new Date(iso + "T12:00"), g = new Date(); g.setDate(g.getDate() - 1);
+  return iso === heute ? "Heute" : iso === isoTag(g) ? "Gestern" : datumLang(d);
+}
+async function verlaufLaden() {
+  const bis = new Date(), von = new Date(); von.setDate(von.getDate() - (verlauf.tage - 1));
+  try { verlauf.daten = await holen(`/api/gedaechtnis/timeline?von=${isoTag(von)}&bis=${isoTag(bis)}`); }
+  catch (e) { if ($("tag-liste")) $("tag-liste").innerHTML = `<div class="karte"><div class="leer">Verlauf nicht erreichbar</div></div>`; return; }
+  verlaufZeichnen();
+}
+function verlaufZeichnen() {
+  const el = $("tag-liste");
+  if (!el) return;
+  const {inhalt, protokoll} = verlaufAufbereiten(verlauf.daten);
+  const tage = [...new Set(inhalt.map((e) => e.datum))];
+  el.innerHTML = (tage.length ? tage.map((t) => `<div class="karte verlauf-tag"><h3>${esc(tagTitel(t))}</h3>${liste(inhalt.filter((e) => e.datum === t), verlaufZeile, "")}</div>`).join("")
+      : `<div class="karte"><div class="leer">In den letzten ${verlauf.tage} Tagen ist nichts gespeichert</div></div>`) + `
+    <button class="knopf" id="verlauf-mehr" style="width:100%;margin-bottom:12px">Ältere anzeigen</button>
+    ${protokoll.length ? `<details class="gruppe bereich" id="protokoll" ${verlauf.protokollOffen ? "open" : ""}>
+      <summary class="zeile"><span class="sym">${ic("sicherheit")}</span><span class="txt"><b>Protokoll</b><small>${protokoll.length} Einträge: Freigaben, Sicherheit, Technik${protokoll.some((e) => e.art === "warnung") ? ` · <span class="rot">${protokoll.filter((e) => e.art === "warnung").length} Warnung${protokoll.filter((e) => e.art === "warnung").length > 1 ? "en" : ""}</span>` : ""}</small></span>${ic("pfeil", "i auf")}</summary>
+      <div style="padding:4px 16px 12px">${liste(protokoll, (e) => `<li><span class="zeit">${esc(e.uhr)}</span><span style="min-width:0" class="${e.art === "warnung" ? "rot" : ""}">${esc(protokollText(e))}<div class="klein">${esc(e.label)}${e.datum === isoTag(new Date()) ? "" : " · " + esc(tagTitel(e.datum))}</div></span></li>`, "")}</div>
+    </details>` : ""}`;
+  $("verlauf-mehr").onclick = () => { verlauf.tage = Math.min(verlauf.tage + 7, 31); verlaufLaden(); };
+  if (verlauf.tage >= 31) $("verlauf-mehr").hidden = true;
+  $("protokoll")?.addEventListener("toggle", (ev) => (verlauf.protokollOffen = ev.target.open));
+}
+// Protokolltexte ohne Werkzeug-Kürzel: „Erlaubt in der App: memory.remember“ → „Erlaubt in der App: Etwas merken“.
+const protokollText = (e) => String(e.text).replace(/\b([a-z_]+(?:\.[a-z_]+)+)\b/g, (t) => WERKZEUG_NAMEN[t] || t);
+const artName = (a) => ({termin: "Termin", episodisch: "Erinnerung", sicherheit: "Sicherheit", agent: "Agent", offline: "Internet", online: "Internet"}[a] || a);
+
+// ---------------------------------------------------------------- Agents
+ANSICHTEN.agenten = (el) => {
+  const a = zustand.agenten;
+  el.innerHTML = `
+    <h1 class="titel">Agents</h1>
+    <p class="unter">QuLSI arbeitet im Hintergrund von selbst. Kritisches landet immer erst als Freigabe bei dir in der App.</p>
+    ${!a ? lade() : !a.an ? `<div class="karte"><div class="leer">Hintergrund-Agents sind auf der Box abgeschaltet (QULSI_AGENTEN=aus).</div></div>` : ""}
+    ${(a?.agenten || []).map((g) => `<div class="karte agent" data-name="${esc(g.name)}">
+      <div class="kopfzeile"><div class="txt"><b>${esc(g.titel)}</b><div class="klein">${esc(zeitplanText(g))}</div></div>
+        <label class="schalter"><input type="checkbox" ${g.aktiv ? "checked" : ""} data-aktiv aria-label="${esc(g.titel)} an oder aus"><span></span></label></div>
+      <div class="details">
+        ${g.naechster_lauf ? `<span class="chip">Nächster Lauf ${esc(g.naechster_lauf.slice(0, 6))} ${esc(g.naechster_lauf.slice(-5))}</span>` : ""}
+        ${g.letzter_lauf ? `<span class="chip ${g.letzter_lauf.status === "fehler" ? "warn" : ""}">Zuletzt ${esc(g.letzter_lauf.zeit.slice(-5))} · ${esc(g.letzter_lauf.status)}</span>` : `<span class="chip">Noch nie gelaufen</span>`}
+        ${g.selbststaendig.length ? `<span class="chip">darf selbst: ${esc(g.selbststaendig.map(werkzeugName).join(", "))}</span>` : ""}
+      </div>
+      ${g.letzter_lauf?.ergebnis ? `<div class="ergebnis">${esc(g.letzter_lauf.ergebnis)}</div>` : ""}
+      <div class="aktionen"><button class="knopf klein" data-start>${ic("play")}Jetzt laufen lassen</button></div>
+    </div>`).join("")}
+    <a class="zeile gruppe" href="#/einstellungen/agenten" style="border-radius:var(--r)"><span class="sym">${ic("agenten")}</span><span class="txt"><b>Ruhezeit und Hinweise</b><small>Wann Agents dich nicht stören</small></span>${ic("pfeil", "i pfeil")}</a>
+    <p class="hinweis">Welche Werkzeuge ein Agent benutzen darf, steht absichtlich nur in <code>config/agenten.yaml</code> auf der Box.</p>`;
+  el.querySelectorAll(".agent").forEach((k) => {
+    const name = k.dataset.name;
+    k.querySelector("[data-aktiv]").addEventListener("change", async (ev) => {
+      try { await api(`/api/agenten/${name}/aktiv`, {json: {aktiv: ev.target.checked}}); melden(ev.target.checked ? "Eingeschaltet" : "Ausgeschaltet"); agentenLaden(); }
+      catch (e) { ev.target.checked = !ev.target.checked; melden(e.message, true); }
+    });
+    k.querySelector("[data-start]").addEventListener("click", async (ev) => {
+      const b = ev.currentTarget;
+      b.disabled = true; b.lastChild.textContent = "Läuft…";
+      try { await api(`/api/agenten/${name}/starten`, {method: "POST"}); melden("Fertig"); await agentenLaden(); }
+      catch (e) { melden(e.message, true); b.disabled = false; b.lastChild.textContent = "Jetzt laufen lassen"; }
+    });
+  });
+};
+function zeitplanText(g) {
+  const t = [];
+  if (g.zeitplan) t.push(g.zeitplan.charAt(0).toUpperCase() + g.zeitplan.slice(1));
+  if (g.ereignisse?.length) t.push("bei " + g.ereignisse.join(", "));
+  return t.join(" · ") || "Nur wenn du ihn startest";
+}
+async function agentenLaden() {
+  try { zustand.agenten = await holen("/api/agenten"); } catch (e) { zustand.agenten = {an: false, agenten: []}; }
+  if (aktuelleAnsicht() === "agenten") route();
+}
+const aktuelleAnsicht = () => (location.hash.replace(/^#\/?/, "") || "heute").split("/")[0];
+
+// ---------------------------------------------------------------- Einstellungen
+const BEREICHE = [
+  {id: "konten", titel: "Konten & Connectoren", icon: "konten", text: "Google, Microsoft, NAS, Browser, Mail …"},
+  {id: "agenten", titel: "Hintergrund-Agents", icon: "agenten", text: "Ruhezeit, Hinweise"},
+  {id: "gedaechtnis", titel: "Gedächtnis & Memchip", icon: "chip", text: "Sicherung, Organisator"},
+  {id: "modelle", titel: "Modelle", icon: "modelle", text: "Welches Modell antwortet"},
+  {id: "stimme", titel: "Stimme", icon: "stimme", text: "Sprecher, Vorlesen"},
+  {id: "sicherheit", titel: "Sicherheit & Freigaben", icon: "sicherheit", text: "Stufen, Limits, fremde Inhalte"},
+  {id: "benachrichtigungen", titel: "Benachrichtigungen", icon: "glocke", text: "Aufs Handy und die Uhr"},
+  {id: "system", titel: "System", icon: "system", text: "Offline-Modus, Adresse, Abmelden"},
+  {id: "box", titel: "Nur auf der Box", icon: "box", text: "Was bewusst nicht in der App geht"},
+];
+const MODUS = {an: "An", nur_lesen: "Nur lesen", aus: "Aus"};
+
+function wertZusammenfassung(id) {
+  const e = zustand.einst, c = zustand.connectoren;
+  if (id === "konten" && c) { const an = c.filter((x) => x.modus !== "aus").length; return `${an} von ${c.length} an`; }
+  if (!e) return "";
+  return {
+    agenten: e.agenten.ruhezeit ? "Ruhe " + e.agenten.ruhezeit : "Keine Ruhezeit",
+    gedaechtnis: e.gedaechtnis.memchip?.verschluesselung === "fehlt" ? "Passwort fehlt" : e.gedaechtnis.memchip?.eingesteckt ? "Memchip steckt" : "Kein Memchip",
+    modelle: e.modelle.rollen.standard,
+    stimme: anbieterName(e.stimme.modell || e.stimme.tts),
+    sicherheit: "",
+    benachrichtigungen: e.benachrichtigungen.eingerichtet ? "Eingerichtet" : "Nicht eingerichtet",
+    system: {auto: "Automatisch", true: "Immer offline", false: "Immer online"}[e.system.offline],
+  }[id] || "";
+}
+
+ANSICHTEN.einstellungen = (el, teile) => {
+  const b = BEREICHE.find((x) => x.id === teile[0]);
+  if (b) return bereichZeichnen(el, b);
+  el.innerHTML = `
+    <h1 class="titel">Einstellungen</h1>
+    <p class="unter">Alles Wichtige direkt hier. Änderungen wirken sofort.</p><div class="uebersicht">
+    <div class="gruppe">${BEREICHE.slice(0, 3).map(bereichZeile).join("")}</div>
+    <div class="gruppe">${BEREICHE.slice(3, 5).map(bereichZeile).join("")}</div>
+    <div class="gruppe">${BEREICHE.slice(5, 8).map(bereichZeile).join("")}</div>
+    <div class="gruppe">${BEREICHE.slice(8).map(bereichZeile).join("")}</div>
+    </div>${zustand.einstFehler ? `<p class="hinweis warn">${esc(zustand.einstFehler)}</p>` : ""}`;
+};
+const bereichZeile = (b) => `<a class="zeile" href="#/einstellungen/${b.id}"><span class="sym">${ic(b.icon)}</span>
+  <span class="txt"><b>${b.titel}</b><small>${b.text}</small>${wertZusammenfassung(b.id) ? `<small class="wert-mobil">${esc(wertZusammenfassung(b.id))}</small>` : ""}</span><span class="wert">${esc(wertZusammenfassung(b.id))}</span>${ic("pfeil", "i pfeil")}</a>`;
+
+const STUFEN = [["low", "Frei"], ["medium", "Normal"], ["high", "Freigabe"], ["deny", "Gesperrt"]];
+const STRENG_STUFE = {low: 0, medium: 1, high: 2, deny: 3};
+const dauer = (sek) => sek >= 120 && sek % 60 === 0 ? `${sek / 60} Minuten` : `${sek} Sekunden`;
+const offeneBereiche = new Set();
+function werkzeugBereiche(werkzeuge) {
+  const bereiche = WERKZEUG_BEREICHE.map(([id, titel, icon, passt]) => ({id, titel, icon, passt, ws: []}));
+  for (const w of werkzeuge) bereiche.find((b) => b.passt(w.faehigkeit)).ws.push(w);
+  return bereiche.filter((b) => b.ws.length).map((b) => {
+    b.ws.sort((x, y) => STRENG_STUFE[x.grund] - STRENG_STUFE[y.grund] || werkzeugName(x.faehigkeit).localeCompare(werkzeugName(y.faehigkeit), "de"));
+    const zaehl = {};
+    for (const w of b.ws) zaehl[w.stufe] = (zaehl[w.stufe] || 0) + 1;
+    const stand = STUFEN.filter(([k]) => zaehl[k]).map(([k, t]) => Object.keys(zaehl).length === 1 ? "Alle " + t : `${zaehl[k]}\u00a0${t}`).join(" · ");
+    const geaendertN = b.ws.filter((w) => w.stufe !== w.grund).length;
+    return `<details class="gruppe bereich" data-bereich-id="${b.id}" ${offeneBereiche.has(b.id) ? "open" : ""}>
+      <summary class="zeile"><span class="sym">${ic(b.icon)}</span><span class="txt"><b>${b.titel}</b><small>${b.ws.length} Werkzeug${b.ws.length > 1 ? "e" : ""} · ${stand}${geaendertN ? ` · <span class="warn">${geaendertN} strenger</span>` : ""}</small></span>${ic("pfeil", "i auf")}</summary>
+      ${b.ws.map((w) => zeile(esc(werkzeugName(w.faehigkeit)), `<span class="technik">${esc(w.faehigkeit)}</span>`,
+        `<span class="segment" data-stufe="${esc(w.faehigkeit)}">${STUFEN.map(([k, t]) => `<button type="button" data-wert="${k}" class="${k === w.stufe ? "an" : ""}" ${STRENG_STUFE[k] < STRENG_STUFE[w.grund] ? "disabled title=\"Nur auf der Box lockerer einstellbar\"" : ""}>${t}</button>`).join("")}</span>`,
+        w.stufe !== w.grund ? `<span class="geaendert" data-stufe-zurueck="${esc(w.faehigkeit)}">↺ geändert, zurücksetzen</span>` : "")).join("")}
+    </details>`;
+  }).join("");
+}
+// QR-Code: "QRCode for JavaScript", Copyright (c) 2009 Kazuhiko Arase, MIT-Lizenz (http://www.d-project.com/),
+// hier unverändert eingebettet (Fassung aus qrcode-terminal), damit die App ohne Internet QR-Codes zeichnen kann.
+const QRCodeLib = (() => {
+const M = {};
+const require = (n) => M[n.replace("./", "")];
+M["QRMode"] = (() => { const module = {exports: {}};
+module.exports = {
+    MODE_NUMBER :       1 << 0,
+    MODE_ALPHA_NUM :    1 << 1,
+    MODE_8BIT_BYTE :    1 << 2,
+    MODE_KANJI :        1 << 3
+};
+return module.exports; })();
+M["QRErrorCorrectLevel"] = (() => { const module = {exports: {}};
+module.exports = {
+	L : 1,
+	M : 0,
+	Q : 3,
+	H : 2
+};
+return module.exports; })();
+M["QRMaskPattern"] = (() => { const module = {exports: {}};
+module.exports = {
+	PATTERN000 : 0,
+	PATTERN001 : 1,
+	PATTERN010 : 2,
+	PATTERN011 : 3,
+	PATTERN100 : 4,
+	PATTERN101 : 5,
+	PATTERN110 : 6,
+	PATTERN111 : 7
+};
+return module.exports; })();
+M["QRMath"] = (() => { const module = {exports: {}};
+var QRMath = {
+	glog : function(n) {
+		if (n < 1) {
+			throw new Error("glog(" + n + ")");
+		}
+		return QRMath.LOG_TABLE[n];
+	},
+	gexp : function(n) {
+		while (n < 0) {
+			n += 255;
+		}
+		while (n >= 256) {
+			n -= 255;
+		}
+		return QRMath.EXP_TABLE[n];
+	},
+	EXP_TABLE : new Array(256),
+	LOG_TABLE : new Array(256)
+};
+for (var i = 0; i < 8; i++) {
+	QRMath.EXP_TABLE[i] = 1 << i;
+}
+for (var i = 8; i < 256; i++) {
+	QRMath.EXP_TABLE[i] = QRMath.EXP_TABLE[i - 4]
+		^ QRMath.EXP_TABLE[i - 5]
+		^ QRMath.EXP_TABLE[i - 6]
+		^ QRMath.EXP_TABLE[i - 8];
+}
+for (var i = 0; i < 255; i++) {
+	QRMath.LOG_TABLE[QRMath.EXP_TABLE[i] ] = i;
+}
+module.exports = QRMath;
+return module.exports; })();
+M["QRPolynomial"] = (() => { const module = {exports: {}};
+var QRMath = require('./QRMath');
+function QRPolynomial(num, shift) {
+	if (num.length === undefined) {
+		throw new Error(num.length + "/" + shift);
+	}
+	var offset = 0;
+	while (offset < num.length && num[offset] === 0) {
+		offset++;
+	}
+	this.num = new Array(num.length - offset + shift);
+	for (var i = 0; i < num.length - offset; i++) {
+		this.num[i] = num[i + offset];
+	}
+}
+QRPolynomial.prototype = {
+	get : function(index) {
+		return this.num[index];
+	},
+	getLength : function() {
+		return this.num.length;
+	},
+	multiply : function(e) {
+		var num = new Array(this.getLength() + e.getLength() - 1);
+		for (var i = 0; i < this.getLength(); i++) {
+			for (var j = 0; j < e.getLength(); j++) {
+				num[i + j] ^= QRMath.gexp(QRMath.glog(this.get(i) ) + QRMath.glog(e.get(j) ) );
+			}
+		}
+		return new QRPolynomial(num, 0);
+	},
+	mod : function(e) {
+		if (this.getLength() - e.getLength() < 0) {
+			return this;
+		}
+		var ratio = QRMath.glog(this.get(0) ) - QRMath.glog(e.get(0) );
+		var num = new Array(this.getLength() );
+		for (var i = 0; i < this.getLength(); i++) {
+			num[i] = this.get(i);
+		}
+		for (var x = 0; x < e.getLength(); x++) {
+			num[x] ^= QRMath.gexp(QRMath.glog(e.get(x) ) + ratio);
+		}
+		return new QRPolynomial(num, 0).mod(e);
+	}
+};
+module.exports = QRPolynomial;
+return module.exports; })();
+M["QR8bitByte"] = (() => { const module = {exports: {}};
+var QRMode = require('./QRMode');
+function QR8bitByte(data) {
+	this.mode = QRMode.MODE_8BIT_BYTE;
+	this.data = data;
+}
+QR8bitByte.prototype = {
+	getLength : function() {
+		return this.data.length;
+	},
+	write : function(buffer) {
+		for (var i = 0; i < this.data.length; i++) {
+			buffer.put(this.data.charCodeAt(i), 8);
+		}
+	}
+};
+module.exports = QR8bitByte;
+return module.exports; })();
+M["QRBitBuffer"] = (() => { const module = {exports: {}};
+function QRBitBuffer() {
+	this.buffer = [];
+	this.length = 0;
+}
+QRBitBuffer.prototype = {
+	get : function(index) {
+		var bufIndex = Math.floor(index / 8);
+		return ( (this.buffer[bufIndex] >>> (7 - index % 8) ) & 1) == 1;
+	},
+	put : function(num, length) {
+		for (var i = 0; i < length; i++) {
+			this.putBit( ( (num >>> (length - i - 1) ) & 1) == 1);
+		}
+	},
+	getLengthInBits : function() {
+		return this.length;
+	},
+	putBit : function(bit) {
+		var bufIndex = Math.floor(this.length / 8);
+		if (this.buffer.length <= bufIndex) {
+			this.buffer.push(0);
+		}
+		if (bit) {
+			this.buffer[bufIndex] |= (0x80 >>> (this.length % 8) );
+		}
+		this.length++;
+	}
+};
+module.exports = QRBitBuffer;
+return module.exports; })();
+M["QRRSBlock"] = (() => { const module = {exports: {}};
+var QRErrorCorrectLevel = require('./QRErrorCorrectLevel');
+function QRRSBlock(totalCount, dataCount) {
+	this.totalCount = totalCount;
+	this.dataCount  = dataCount;
+}
+QRRSBlock.RS_BLOCK_TABLE = [
+	[1, 26, 19],
+	[1, 26, 16],
+	[1, 26, 13],
+	[1, 26, 9],
+	[1, 44, 34],
+	[1, 44, 28],
+	[1, 44, 22],
+	[1, 44, 16],
+	[1, 70, 55],
+	[1, 70, 44],
+	[2, 35, 17],
+	[2, 35, 13],
+	[1, 100, 80],
+	[2, 50, 32],
+	[2, 50, 24],
+	[4, 25, 9],
+	[1, 134, 108],
+	[2, 67, 43],
+	[2, 33, 15, 2, 34, 16],
+	[2, 33, 11, 2, 34, 12],
+	[2, 86, 68],
+	[4, 43, 27],
+	[4, 43, 19],
+	[4, 43, 15],
+	[2, 98, 78],
+	[4, 49, 31],
+	[2, 32, 14, 4, 33, 15],
+	[4, 39, 13, 1, 40, 14],
+	[2, 121, 97],
+	[2, 60, 38, 2, 61, 39],
+	[4, 40, 18, 2, 41, 19],
+	[4, 40, 14, 2, 41, 15],
+	[2, 146, 116],
+	[3, 58, 36, 2, 59, 37],
+	[4, 36, 16, 4, 37, 17],
+	[4, 36, 12, 4, 37, 13],
+	[2, 86, 68, 2, 87, 69],
+	[4, 69, 43, 1, 70, 44],
+	[6, 43, 19, 2, 44, 20],
+	[6, 43, 15, 2, 44, 16],
+	[4, 101, 81],
+	[1, 80, 50, 4, 81, 51],
+	[4, 50, 22, 4, 51, 23],
+	[3, 36, 12, 8, 37, 13],
+	[2, 116, 92, 2, 117, 93],
+	[6, 58, 36, 2, 59, 37],
+	[4, 46, 20, 6, 47, 21],
+	[7, 42, 14, 4, 43, 15],
+	[4, 133, 107],
+	[8, 59, 37, 1, 60, 38],
+	[8, 44, 20, 4, 45, 21],
+	[12, 33, 11, 4, 34, 12],
+	[3, 145, 115, 1, 146, 116],
+	[4, 64, 40, 5, 65, 41],
+	[11, 36, 16, 5, 37, 17],
+	[11, 36, 12, 5, 37, 13],
+	[5, 109, 87, 1, 110, 88],
+	[5, 65, 41, 5, 66, 42],
+	[5, 54, 24, 7, 55, 25],
+	[11, 36, 12],
+	[5, 122, 98, 1, 123, 99],
+	[7, 73, 45, 3, 74, 46],
+	[15, 43, 19, 2, 44, 20],
+	[3, 45, 15, 13, 46, 16],
+	[1, 135, 107, 5, 136, 108],
+	[10, 74, 46, 1, 75, 47],
+	[1, 50, 22, 15, 51, 23],
+	[2, 42, 14, 17, 43, 15],
+	[5, 150, 120, 1, 151, 121],
+	[9, 69, 43, 4, 70, 44],
+	[17, 50, 22, 1, 51, 23],
+	[2, 42, 14, 19, 43, 15],
+	[3, 141, 113, 4, 142, 114],
+	[3, 70, 44, 11, 71, 45],
+	[17, 47, 21, 4, 48, 22],
+	[9, 39, 13, 16, 40, 14],
+	[3, 135, 107, 5, 136, 108],
+	[3, 67, 41, 13, 68, 42],
+	[15, 54, 24, 5, 55, 25],
+	[15, 43, 15, 10, 44, 16],
+	[4, 144, 116, 4, 145, 117],
+	[17, 68, 42],
+	[17, 50, 22, 6, 51, 23],
+	[19, 46, 16, 6, 47, 17],
+	[2, 139, 111, 7, 140, 112],
+	[17, 74, 46],
+	[7, 54, 24, 16, 55, 25],
+	[34, 37, 13],
+	[4, 151, 121, 5, 152, 122],
+	[4, 75, 47, 14, 76, 48],
+	[11, 54, 24, 14, 55, 25],
+	[16, 45, 15, 14, 46, 16],
+	[6, 147, 117, 4, 148, 118],
+	[6, 73, 45, 14, 74, 46],
+	[11, 54, 24, 16, 55, 25],
+	[30, 46, 16, 2, 47, 17],
+	[8, 132, 106, 4, 133, 107],
+	[8, 75, 47, 13, 76, 48],
+	[7, 54, 24, 22, 55, 25],
+	[22, 45, 15, 13, 46, 16],
+	[10, 142, 114, 2, 143, 115],
+	[19, 74, 46, 4, 75, 47],
+	[28, 50, 22, 6, 51, 23],
+	[33, 46, 16, 4, 47, 17],
+	[8, 152, 122, 4, 153, 123],
+	[22, 73, 45, 3, 74, 46],
+	[8, 53, 23, 26, 54, 24],
+	[12, 45, 15, 28, 46, 16],
+	[3, 147, 117, 10, 148, 118],
+	[3, 73, 45, 23, 74, 46],
+	[4, 54, 24, 31, 55, 25],
+	[11, 45, 15, 31, 46, 16],
+	[7, 146, 116, 7, 147, 117],
+	[21, 73, 45, 7, 74, 46],
+	[1, 53, 23, 37, 54, 24],
+	[19, 45, 15, 26, 46, 16],
+	[5, 145, 115, 10, 146, 116],
+	[19, 75, 47, 10, 76, 48],
+	[15, 54, 24, 25, 55, 25],
+	[23, 45, 15, 25, 46, 16],
+	[13, 145, 115, 3, 146, 116],
+	[2, 74, 46, 29, 75, 47],
+	[42, 54, 24, 1, 55, 25],
+	[23, 45, 15, 28, 46, 16],
+	[17, 145, 115],
+	[10, 74, 46, 23, 75, 47],
+	[10, 54, 24, 35, 55, 25],
+	[19, 45, 15, 35, 46, 16],
+	[17, 145, 115, 1, 146, 116],
+	[14, 74, 46, 21, 75, 47],
+	[29, 54, 24, 19, 55, 25],
+	[11, 45, 15, 46, 46, 16],
+	[13, 145, 115, 6, 146, 116],
+	[14, 74, 46, 23, 75, 47],
+	[44, 54, 24, 7, 55, 25],
+	[59, 46, 16, 1, 47, 17],
+	[12, 151, 121, 7, 152, 122],
+	[12, 75, 47, 26, 76, 48],
+	[39, 54, 24, 14, 55, 25],
+	[22, 45, 15, 41, 46, 16],
+	[6, 151, 121, 14, 152, 122],
+	[6, 75, 47, 34, 76, 48],
+	[46, 54, 24, 10, 55, 25],
+	[2, 45, 15, 64, 46, 16],
+	[17, 152, 122, 4, 153, 123],
+	[29, 74, 46, 14, 75, 47],
+	[49, 54, 24, 10, 55, 25],
+	[24, 45, 15, 46, 46, 16],
+	[4, 152, 122, 18, 153, 123],
+	[13, 74, 46, 32, 75, 47],
+	[48, 54, 24, 14, 55, 25],
+	[42, 45, 15, 32, 46, 16],
+	[20, 147, 117, 4, 148, 118],
+	[40, 75, 47, 7, 76, 48],
+	[43, 54, 24, 22, 55, 25],
+	[10, 45, 15, 67, 46, 16],
+	[19, 148, 118, 6, 149, 119],
+	[18, 75, 47, 31, 76, 48],
+	[34, 54, 24, 34, 55, 25],
+	[20, 45, 15, 61, 46, 16]
+];
+QRRSBlock.getRSBlocks = function(typeNumber, errorCorrectLevel) {
+	var rsBlock = QRRSBlock.getRsBlockTable(typeNumber, errorCorrectLevel);
+	if (rsBlock === undefined) {
+		throw new Error("bad rs block @ typeNumber:" + typeNumber + "/errorCorrectLevel:" + errorCorrectLevel);
+	}
+	var length = rsBlock.length / 3;
+	var list = [];
+	for (var i = 0; i < length; i++) {
+		var count = rsBlock[i * 3 + 0];
+		var totalCount = rsBlock[i * 3 + 1];
+		var dataCount  = rsBlock[i * 3 + 2];
+		for (var j = 0; j < count; j++) {
+			list.push(new QRRSBlock(totalCount, dataCount) );	
+		}
+	}
+	return list;
+};
+QRRSBlock.getRsBlockTable = function(typeNumber, errorCorrectLevel) {
+	switch(errorCorrectLevel) {
+	case QRErrorCorrectLevel.L :
+		return QRRSBlock.RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 0];
+	case QRErrorCorrectLevel.M :
+		return QRRSBlock.RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 1];
+	case QRErrorCorrectLevel.Q :
+		return QRRSBlock.RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 2];
+	case QRErrorCorrectLevel.H :
+		return QRRSBlock.RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 3];
+	default :
+		return undefined;
+	}
+};
+module.exports = QRRSBlock;
+return module.exports; })();
+M["QRUtil"] = (() => { const module = {exports: {}};
+var QRMode = require('./QRMode');
+var QRPolynomial = require('./QRPolynomial');
+var QRMath = require('./QRMath');
+var QRMaskPattern = require('./QRMaskPattern');
+var QRUtil = {
+    PATTERN_POSITION_TABLE : [
+        [],
+        [6, 18],
+        [6, 22],
+        [6, 26],
+        [6, 30],
+        [6, 34],
+        [6, 22, 38],
+        [6, 24, 42],
+        [6, 26, 46],
+        [6, 28, 50],
+        [6, 30, 54],        
+        [6, 32, 58],
+        [6, 34, 62],
+        [6, 26, 46, 66],
+        [6, 26, 48, 70],
+        [6, 26, 50, 74],
+        [6, 30, 54, 78],
+        [6, 30, 56, 82],
+        [6, 30, 58, 86],
+        [6, 34, 62, 90],
+        [6, 28, 50, 72, 94],
+        [6, 26, 50, 74, 98],
+        [6, 30, 54, 78, 102],
+        [6, 28, 54, 80, 106],
+        [6, 32, 58, 84, 110],
+        [6, 30, 58, 86, 114],
+        [6, 34, 62, 90, 118],
+        [6, 26, 50, 74, 98, 122],
+        [6, 30, 54, 78, 102, 126],
+        [6, 26, 52, 78, 104, 130],
+        [6, 30, 56, 82, 108, 134],
+        [6, 34, 60, 86, 112, 138],
+        [6, 30, 58, 86, 114, 142],
+        [6, 34, 62, 90, 118, 146],
+        [6, 30, 54, 78, 102, 126, 150],
+        [6, 24, 50, 76, 102, 128, 154],
+        [6, 28, 54, 80, 106, 132, 158],
+        [6, 32, 58, 84, 110, 136, 162],
+        [6, 26, 54, 82, 110, 138, 166],
+        [6, 30, 58, 86, 114, 142, 170]
+    ],
+    G15 : (1 << 10) | (1 << 8) | (1 << 5) | (1 << 4) | (1 << 2) | (1 << 1) | (1 << 0),
+    G18 : (1 << 12) | (1 << 11) | (1 << 10) | (1 << 9) | (1 << 8) | (1 << 5) | (1 << 2) | (1 << 0),
+    G15_MASK : (1 << 14) | (1 << 12) | (1 << 10)    | (1 << 4) | (1 << 1),
+    getBCHTypeInfo : function(data) {
+        var d = data << 10;
+        while (QRUtil.getBCHDigit(d) - QRUtil.getBCHDigit(QRUtil.G15) >= 0) {
+            d ^= (QRUtil.G15 << (QRUtil.getBCHDigit(d) - QRUtil.getBCHDigit(QRUtil.G15) ) );    
+        }
+        return ( (data << 10) | d) ^ QRUtil.G15_MASK;
+    },
+    getBCHTypeNumber : function(data) {
+        var d = data << 12;
+        while (QRUtil.getBCHDigit(d) - QRUtil.getBCHDigit(QRUtil.G18) >= 0) {
+            d ^= (QRUtil.G18 << (QRUtil.getBCHDigit(d) - QRUtil.getBCHDigit(QRUtil.G18) ) );    
+        }
+        return (data << 12) | d;
+    },
+    getBCHDigit : function(data) {
+        var digit = 0;
+        while (data !== 0) {
+            digit++;
+            data >>>= 1;
+        }
+        return digit;
+    },
+    getPatternPosition : function(typeNumber) {
+        return QRUtil.PATTERN_POSITION_TABLE[typeNumber - 1];
+    },
+    getMask : function(maskPattern, i, j) {
+        switch (maskPattern) {
+        case QRMaskPattern.PATTERN000 : return (i + j) % 2 === 0;
+        case QRMaskPattern.PATTERN001 : return i % 2 === 0;
+        case QRMaskPattern.PATTERN010 : return j % 3 === 0;
+        case QRMaskPattern.PATTERN011 : return (i + j) % 3 === 0;
+        case QRMaskPattern.PATTERN100 : return (Math.floor(i / 2) + Math.floor(j / 3) ) % 2 === 0;
+        case QRMaskPattern.PATTERN101 : return (i * j) % 2 + (i * j) % 3 === 0;
+        case QRMaskPattern.PATTERN110 : return ( (i * j) % 2 + (i * j) % 3) % 2 === 0;
+        case QRMaskPattern.PATTERN111 : return ( (i * j) % 3 + (i + j) % 2) % 2 === 0;
+        default :
+            throw new Error("bad maskPattern:" + maskPattern);
+        }
+    },
+    getErrorCorrectPolynomial : function(errorCorrectLength) {
+        var a = new QRPolynomial([1], 0);
+        for (var i = 0; i < errorCorrectLength; i++) {
+            a = a.multiply(new QRPolynomial([1, QRMath.gexp(i)], 0) );
+        }
+        return a;
+    },
+    getLengthInBits : function(mode, type) {
+        if (1 <= type && type < 10) {
+            switch(mode) {
+            case QRMode.MODE_NUMBER     : return 10;
+            case QRMode.MODE_ALPHA_NUM  : return 9;
+            case QRMode.MODE_8BIT_BYTE  : return 8;
+            case QRMode.MODE_KANJI      : return 8;
+            default :
+                throw new Error("mode:" + mode);
+            }
+        } else if (type < 27) {
+            switch(mode) {
+            case QRMode.MODE_NUMBER     : return 12;
+            case QRMode.MODE_ALPHA_NUM  : return 11;
+            case QRMode.MODE_8BIT_BYTE  : return 16;
+            case QRMode.MODE_KANJI      : return 10;
+            default :
+                throw new Error("mode:" + mode);
+            }
+        } else if (type < 41) {
+            switch(mode) {
+            case QRMode.MODE_NUMBER     : return 14;
+            case QRMode.MODE_ALPHA_NUM  : return 13;
+            case QRMode.MODE_8BIT_BYTE  : return 16;
+            case QRMode.MODE_KANJI      : return 12;
+            default :
+                throw new Error("mode:" + mode);
+            }
+        } else {
+            throw new Error("type:" + type);
+        }
+    },
+    getLostPoint : function(qrCode) {
+        var moduleCount = qrCode.getModuleCount();
+        var lostPoint = 0;
+        var row = 0; 
+        var col = 0;
+        for (row = 0; row < moduleCount; row++) {
+            for (col = 0; col < moduleCount; col++) {
+                var sameCount = 0;
+                var dark = qrCode.isDark(row, col);
+                for (var r = -1; r <= 1; r++) {
+                    if (row + r < 0 || moduleCount <= row + r) {
+                        continue;
+                    }
+                    for (var c = -1; c <= 1; c++) {
+                        if (col + c < 0 || moduleCount <= col + c) {
+                            continue;
+                        }
+                        if (r === 0 && c === 0) {
+                            continue;
+                        }
+                        if (dark === qrCode.isDark(row + r, col + c) ) {
+                            sameCount++;
+                        }
+                    }
+                }
+                if (sameCount > 5) {
+                    lostPoint += (3 + sameCount - 5);
+                }
+            }
+        }
+        for (row = 0; row < moduleCount - 1; row++) {
+            for (col = 0; col < moduleCount - 1; col++) {
+                var count = 0;
+                if (qrCode.isDark(row,     col    ) ) count++;
+                if (qrCode.isDark(row + 1, col    ) ) count++;
+                if (qrCode.isDark(row,     col + 1) ) count++;
+                if (qrCode.isDark(row + 1, col + 1) ) count++;
+                if (count === 0 || count === 4) {
+                    lostPoint += 3;
+                }
+            }
+        }
+        for (row = 0; row < moduleCount; row++) {
+            for (col = 0; col < moduleCount - 6; col++) {
+                if (qrCode.isDark(row, col) && 
+                        !qrCode.isDark(row, col + 1) && 
+                         qrCode.isDark(row, col + 2) && 
+                         qrCode.isDark(row, col + 3) && 
+                         qrCode.isDark(row, col + 4) && 
+                        !qrCode.isDark(row, col + 5) && 
+                         qrCode.isDark(row, col + 6) ) {
+                    lostPoint += 40;
+                }
+            }
+        }
+        for (col = 0; col < moduleCount; col++) {
+            for (row = 0; row < moduleCount - 6; row++) {
+                if (qrCode.isDark(row, col) &&
+                        !qrCode.isDark(row + 1, col) &&
+                         qrCode.isDark(row + 2, col) &&
+                         qrCode.isDark(row + 3, col) &&
+                         qrCode.isDark(row + 4, col) &&
+                        !qrCode.isDark(row + 5, col) &&
+                         qrCode.isDark(row + 6, col) ) {
+                    lostPoint += 40;
+                }
+            }
+        }
+        var darkCount = 0;
+        for (col = 0; col < moduleCount; col++) {
+            for (row = 0; row < moduleCount; row++) {
+                if (qrCode.isDark(row, col) ) {
+                    darkCount++;
+                }
+            }
+        }
+        var ratio = Math.abs(100 * darkCount / moduleCount / moduleCount - 50) / 5;
+        lostPoint += ratio * 10;
+        return lostPoint;       
+    }
+};
+module.exports = QRUtil;
+return module.exports; })();
+M["index"] = (() => { const module = {exports: {}};
+var QR8bitByte = require('./QR8bitByte');
+var QRUtil = require('./QRUtil');
+var QRPolynomial = require('./QRPolynomial');
+var QRRSBlock = require('./QRRSBlock');
+var QRBitBuffer = require('./QRBitBuffer');
+function QRCode(typeNumber, errorCorrectLevel) {
+	this.typeNumber = typeNumber;
+	this.errorCorrectLevel = errorCorrectLevel;
+	this.modules = null;
+	this.moduleCount = 0;
+	this.dataCache = null;
+	this.dataList = [];
+}
+QRCode.prototype = {
+	addData : function(data) {
+		var newData = new QR8bitByte(data);
+		this.dataList.push(newData);
+		this.dataCache = null;
+	},
+	isDark : function(row, col) {
+		if (row < 0 || this.moduleCount <= row || col < 0 || this.moduleCount <= col) {
+			throw new Error(row + "," + col);
+		}
+		return this.modules[row][col];
+	},
+	getModuleCount : function() {
+		return this.moduleCount;
+	},
+	make : function() {
+		if (this.typeNumber < 1 ){
+			var typeNumber = 1;
+			for (typeNumber = 1; typeNumber < 40; typeNumber++) {
+				var rsBlocks = QRRSBlock.getRSBlocks(typeNumber, this.errorCorrectLevel);
+				var buffer = new QRBitBuffer();
+				var totalDataCount = 0;
+				for (var i = 0; i < rsBlocks.length; i++) {
+					totalDataCount += rsBlocks[i].dataCount;
+				}
+				for (var x = 0; x < this.dataList.length; x++) {
+					var data = this.dataList[x];
+					buffer.put(data.mode, 4);
+					buffer.put(data.getLength(), QRUtil.getLengthInBits(data.mode, typeNumber) );
+					data.write(buffer);
+				}
+				if (buffer.getLengthInBits() <= totalDataCount * 8)
+					break;
+			}
+			this.typeNumber = typeNumber;
+		}
+		this.makeImpl(false, this.getBestMaskPattern() );
+	},
+	makeImpl : function(test, maskPattern) {
+		this.moduleCount = this.typeNumber * 4 + 17;
+		this.modules = new Array(this.moduleCount);
+		for (var row = 0; row < this.moduleCount; row++) {
+			this.modules[row] = new Array(this.moduleCount);
+			for (var col = 0; col < this.moduleCount; col++) {
+				this.modules[row][col] = null;//(col + row) % 3;
+			}
+		}
+		this.setupPositionProbePattern(0, 0);
+		this.setupPositionProbePattern(this.moduleCount - 7, 0);
+		this.setupPositionProbePattern(0, this.moduleCount - 7);
+		this.setupPositionAdjustPattern();
+		this.setupTimingPattern();
+		this.setupTypeInfo(test, maskPattern);
+		if (this.typeNumber >= 7) {
+			this.setupTypeNumber(test);
+		}
+		if (this.dataCache === null) {
+			this.dataCache = QRCode.createData(this.typeNumber, this.errorCorrectLevel, this.dataList);
+		}
+		this.mapData(this.dataCache, maskPattern);
+	},
+	setupPositionProbePattern : function(row, col)  {
+		for (var r = -1; r <= 7; r++) {
+			if (row + r <= -1 || this.moduleCount <= row + r) continue;
+			for (var c = -1; c <= 7; c++) {
+				if (col + c <= -1 || this.moduleCount <= col + c) continue;
+				if ( (0 <= r && r <= 6 && (c === 0 || c === 6) ) || 
+                     (0 <= c && c <= 6 && (r === 0 || r === 6) ) || 
+                     (2 <= r && r <= 4 && 2 <= c && c <= 4) ) {
+					this.modules[row + r][col + c] = true;
+				} else {
+					this.modules[row + r][col + c] = false;
+				}
+			}		
+		}		
+	},
+	getBestMaskPattern : function() {
+		var minLostPoint = 0;
+		var pattern = 0;
+		for (var i = 0; i < 8; i++) {
+			this.makeImpl(true, i);
+			var lostPoint = QRUtil.getLostPoint(this);
+			if (i === 0 || minLostPoint >  lostPoint) {
+				minLostPoint = lostPoint;
+				pattern = i;
+			}
+		}
+		return pattern;
+	},
+	createMovieClip : function(target_mc, instance_name, depth) {
+		var qr_mc = target_mc.createEmptyMovieClip(instance_name, depth);
+		var cs = 1;
+		this.make();
+		for (var row = 0; row < this.modules.length; row++) {
+			var y = row * cs;
+			for (var col = 0; col < this.modules[row].length; col++) {
+				var x = col * cs;
+				var dark = this.modules[row][col];
+				if (dark) {
+					qr_mc.beginFill(0, 100);
+					qr_mc.moveTo(x, y);
+					qr_mc.lineTo(x + cs, y);
+					qr_mc.lineTo(x + cs, y + cs);
+					qr_mc.lineTo(x, y + cs);
+					qr_mc.endFill();
+				}
+			}
+		}
+		return qr_mc;
+	},
+	setupTimingPattern : function() {
+		for (var r = 8; r < this.moduleCount - 8; r++) {
+			if (this.modules[r][6] !== null) {
+				continue;
+			}
+			this.modules[r][6] = (r % 2 === 0);
+		}
+		for (var c = 8; c < this.moduleCount - 8; c++) {
+			if (this.modules[6][c] !== null) {
+				continue;
+			}
+			this.modules[6][c] = (c % 2 === 0);
+		}
+	},
+	setupPositionAdjustPattern : function() {
+		var pos = QRUtil.getPatternPosition(this.typeNumber);
+		for (var i = 0; i < pos.length; i++) {
+			for (var j = 0; j < pos.length; j++) {
+				var row = pos[i];
+				var col = pos[j];
+				if (this.modules[row][col] !== null) {
+					continue;
+				}
+				for (var r = -2; r <= 2; r++) {
+					for (var c = -2; c <= 2; c++) {
+						if (Math.abs(r) === 2 || 
+                            Math.abs(c) === 2 ||
+                            (r === 0 && c === 0) ) {
+							this.modules[row + r][col + c] = true;
+						} else {
+							this.modules[row + r][col + c] = false;
+						}
+					}
+				}
+			}
+		}
+	},
+	setupTypeNumber : function(test) {
+		var bits = QRUtil.getBCHTypeNumber(this.typeNumber);
+        var mod;
+		for (var i = 0; i < 18; i++) {
+			mod = (!test && ( (bits >> i) & 1) === 1);
+			this.modules[Math.floor(i / 3)][i % 3 + this.moduleCount - 8 - 3] = mod;
+		}
+		for (var x = 0; x < 18; x++) {
+			mod = (!test && ( (bits >> x) & 1) === 1);
+			this.modules[x % 3 + this.moduleCount - 8 - 3][Math.floor(x / 3)] = mod;
+		}
+	},
+	setupTypeInfo : function(test, maskPattern) {
+		var data = (this.errorCorrectLevel << 3) | maskPattern;
+		var bits = QRUtil.getBCHTypeInfo(data);
+        var mod;
+		for (var v = 0; v < 15; v++) {
+			mod = (!test && ( (bits >> v) & 1) === 1);
+			if (v < 6) {
+				this.modules[v][8] = mod;
+			} else if (v < 8) {
+				this.modules[v + 1][8] = mod;
+			} else {
+				this.modules[this.moduleCount - 15 + v][8] = mod;
+			}
+		}
+		for (var h = 0; h < 15; h++) {
+			mod = (!test && ( (bits >> h) & 1) === 1);
+			if (h < 8) {
+				this.modules[8][this.moduleCount - h - 1] = mod;
+			} else if (h < 9) {
+				this.modules[8][15 - h - 1 + 1] = mod;
+			} else {
+				this.modules[8][15 - h - 1] = mod;
+			}
+		}
+		this.modules[this.moduleCount - 8][8] = (!test);
+	},
+	mapData : function(data, maskPattern) {
+		var inc = -1;
+		var row = this.moduleCount - 1;
+		var bitIndex = 7;
+		var byteIndex = 0;
+		for (var col = this.moduleCount - 1; col > 0; col -= 2) {
+			if (col === 6) col--;
+			while (true) {
+				for (var c = 0; c < 2; c++) {
+					if (this.modules[row][col - c] === null) {
+						var dark = false;
+						if (byteIndex < data.length) {
+							dark = ( ( (data[byteIndex] >>> bitIndex) & 1) === 1);
+						}
+						var mask = QRUtil.getMask(maskPattern, row, col - c);
+						if (mask) {
+							dark = !dark;
+						}
+						this.modules[row][col - c] = dark;
+						bitIndex--;
+						if (bitIndex === -1) {
+							byteIndex++;
+							bitIndex = 7;
+						}
+					}
+				}
+				row += inc;
+				if (row < 0 || this.moduleCount <= row) {
+					row -= inc;
+					inc = -inc;
+					break;
+				}
+			}
+		}
+	}
+};
+QRCode.PAD0 = 0xEC;
+QRCode.PAD1 = 0x11;
+QRCode.createData = function(typeNumber, errorCorrectLevel, dataList) {
+	var rsBlocks = QRRSBlock.getRSBlocks(typeNumber, errorCorrectLevel);
+	var buffer = new QRBitBuffer();
+	for (var i = 0; i < dataList.length; i++) {
+		var data = dataList[i];
+		buffer.put(data.mode, 4);
+		buffer.put(data.getLength(), QRUtil.getLengthInBits(data.mode, typeNumber) );
+		data.write(buffer);
+	}
+	var totalDataCount = 0;
+	for (var x = 0; x < rsBlocks.length; x++) {
+		totalDataCount += rsBlocks[x].dataCount;
+	}
+	if (buffer.getLengthInBits() > totalDataCount * 8) {
+		throw new Error("code length overflow. (" + 
+            buffer.getLengthInBits() + 
+            ">" +  
+            totalDataCount * 8 + 
+            ")");
+	}
+	if (buffer.getLengthInBits() + 4 <= totalDataCount * 8) {
+		buffer.put(0, 4);
+	}
+	while (buffer.getLengthInBits() % 8 !== 0) {
+		buffer.putBit(false);
+	}
+	while (true) {
+		if (buffer.getLengthInBits() >= totalDataCount * 8) {
+			break;
+		}
+		buffer.put(QRCode.PAD0, 8);
+		if (buffer.getLengthInBits() >= totalDataCount * 8) {
+			break;
+		}
+		buffer.put(QRCode.PAD1, 8);
+	}
+	return QRCode.createBytes(buffer, rsBlocks);
+};
+QRCode.createBytes = function(buffer, rsBlocks) {
+	var offset = 0;
+	var maxDcCount = 0;
+	var maxEcCount = 0;
+	var dcdata = new Array(rsBlocks.length);
+	var ecdata = new Array(rsBlocks.length);
+	for (var r = 0; r < rsBlocks.length; r++) {
+		var dcCount = rsBlocks[r].dataCount;
+		var ecCount = rsBlocks[r].totalCount - dcCount;
+		maxDcCount = Math.max(maxDcCount, dcCount);
+		maxEcCount = Math.max(maxEcCount, ecCount);
+		dcdata[r] = new Array(dcCount);
+		for (var i = 0; i < dcdata[r].length; i++) {
+			dcdata[r][i] = 0xff & buffer.buffer[i + offset];
+		}
+		offset += dcCount;
+		var rsPoly = QRUtil.getErrorCorrectPolynomial(ecCount);
+		var rawPoly = new QRPolynomial(dcdata[r], rsPoly.getLength() - 1);
+		var modPoly = rawPoly.mod(rsPoly);
+		ecdata[r] = new Array(rsPoly.getLength() - 1);
+		for (var x = 0; x < ecdata[r].length; x++) {
+            var modIndex = x + modPoly.getLength() - ecdata[r].length;
+			ecdata[r][x] = (modIndex >= 0)? modPoly.get(modIndex) : 0;
+		}
+	}
+	var totalCodeCount = 0;
+	for (var y = 0; y < rsBlocks.length; y++) {
+		totalCodeCount += rsBlocks[y].totalCount;
+	}
+	var data = new Array(totalCodeCount);
+	var index = 0;
+	for (var z = 0; z < maxDcCount; z++) {
+		for (var s = 0; s < rsBlocks.length; s++) {
+			if (z < dcdata[s].length) {
+				data[index++] = dcdata[s][z];
+			}
+		}
+	}
+	for (var xx = 0; xx < maxEcCount; xx++) {
+		for (var t = 0; t < rsBlocks.length; t++) {
+			if (xx < ecdata[t].length) {
+				data[index++] = ecdata[t][xx];
+			}
+		}
+	}
+	return data;
+};
+module.exports = QRCode;
+return module.exports; })();
+M.index.ErrorCorrectLevel = M.QRErrorCorrectLevel;
+return M.index;
+})();
+function qrSvg(text) {
+  const q = new QRCodeLib(-1, QRCodeLib.ErrorCorrectLevel.M);
+  q.addData(text); q.make();
+  const n = q.getModuleCount(), r = 4;
+  let d = "";
+  for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) if (q.isDark(y, x)) d += `M${x + r} ${y + r}h1v1h-1z`;
+  return `<svg viewBox="0 0 ${n + 2 * r} ${n + 2 * r}" shape-rendering="crispEdges" role="img" aria-label="QR-Code"><rect width="100%" height="100%" fill="#fff"/><path d="${d}" fill="#000"/></svg>`;
+}
+// ntfy: öffentliche Adresse fürs Handy. Interne Adressen (127.0.0.1, Docker-Name) taugen dafür nicht.
+let ntfyQr = false;
+function ntfyAdresse(n) {
+  const roh = n.oeffentlich || n.server || "";
+  let u;
+  try { u = new URL(roh); } catch (e) { return null; }
+  if (/^(localhost|127\.|0\.0\.0\.0|\[?::1)/.test(u.hostname) || !u.hostname.includes(".") || !n.thema) return null;
+  const pfad = (u.host + u.pathname).replace(/\/$/, "");
+  return {anzeige: u.origin + u.pathname.replace(/\/$/, ""), web: `${u.origin}${u.pathname.replace(/\/$/, "")}/${encodeURIComponent(n.thema)}`,
+    app: `ntfy://${pfad}/${encodeURIComponent(n.thema)}${u.protocol === "http:" ? "?secure=false" : ""}`};
+}
+const themaVerdeckt = (t) => t.length <= 6 ? t : t.slice(0, 4) + "•••" + t.slice(-2);
+function kopf(b, unter) {
+  return `<a class="zurueck" href="#/einstellungen">${ic("zurueck", "i")}Einstellungen</a>
+    <h1 class="titel">${b.titel}</h1><p class="unter">${unter}</p>`;
+}
+function geaendert(bereich, schluessel) {
+  return (zustand.einst?.geaendert?.[bereich] || []).includes(schluessel)
+    ? `<span class="geaendert" data-zuruecksetzen="${bereich}:${schluessel}" title="Auf den Wert der Box zurücksetzen">↺ geändert, zurücksetzen</span>` : "";
+}
+function segment(bereich, schluessel, optionen, aktuell, gesperrt = () => false) {
+  return `<span class="segment" data-bereich="${bereich}" data-schluessel="${schluessel}">${optionen.map(([w, t]) =>
+    `<button type="button" data-wert="${esc(w)}" class="${String(w) === String(aktuell) ? "an" : ""}" ${gesperrt(w) ? "disabled title=\"Nur in der Datei auf der Box lockerer einstellbar\"" : ""}>${t}</button>`).join("")}</span>`;
+}
+function zeile(titel, text, steuer, extra = "") {
+  const stapel = /class="(segment|wahl)/.test(steuer.slice(0, 40)) ? " stapel" : "";
+  return `<div class="zeile${stapel}"><span class="txt"><b>${titel}</b>${text ? `<small>${text}</small>` : ""}${extra}</span>${steuer}</div>`;
+}
+function zahlFeld(bereich, schluessel, wert, einheit = "", max = "") {
+  return `<span style="display:flex;align-items:center;gap:8px"><input class="feld" type="number" inputmode="numeric" min="0" ${max ? `max="${max}"` : ""} value="${esc(wert ?? "")}" data-bereich="${bereich}" data-schluessel="${schluessel}"><span class="klein">${einheit}</span></span>`;
+}
+async function setzen(bereich, werte, text = "Gespeichert") {
+  try {
+    await api("/api/einstellungen/" + bereich, {json: werte});
+    melden(text);
+  } catch (e) { melden(e.message, true); }
+  await einstLaden();
+}
+function verdrahten(el) {
+  el.querySelectorAll(".segment[data-bereich] button").forEach((b) => b.addEventListener("click", () => {
+    const s = b.parentElement;
+    let wert = b.dataset.wert;
+    if (wert === "true" || wert === "false") wert = s.dataset.bool ? wert === "true" : wert;
+    setzen(s.dataset.bereich, {[s.dataset.schluessel]: wert});
+  }));
+  el.querySelectorAll("input.feld[data-bereich], select.wahl[data-bereich]").forEach((f) => f.addEventListener("change", () => {
+    const wert = f.type === "number" ? Number(f.value) : f.value;
+    setzen(f.dataset.bereich, {[f.dataset.schluessel]: wert});
+  }));
+  el.querySelectorAll("[data-zuruecksetzen]").forEach((x) => x.addEventListener("click", () => {
+    const [bereich, schluessel] = x.dataset.zuruecksetzen.split(":");
+    setzen(bereich, {[schluessel]: null}, "Zurückgesetzt");
+  }));
+  el.querySelectorAll("[data-kopie]").forEach((b) => b.addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(b.dataset.kopie); melden("Kopiert"); } catch (e) { melden("Kopieren nicht möglich", true); }
+  }));
+}
+const befehl = (t) => `<div class="befehl"><code>${esc(t)}</code><button type="button" class="rund" style="width:30px;height:30px" data-kopie="${esc(t)}" aria-label="Kopieren">${ic("kopie")}</button></div>`;
+
+function bereichZeichnen(el, b) {
+  const e = zustand.einst;
+  const F = BEREICH_ANSICHT[b.id];
+  if (b.id !== "konten" && b.id !== "box" && !e) {
+    el.innerHTML = kopf(b, "") + `<div class="karte"><div class="leer">${esc(zustand.einstFehler || "lädt…")}</div></div>`;
+    return;
+  }
+  el.innerHTML = F(b, e);
+  verdrahten(el);
+  BEREICH_NACH[b.id]?.(el);
+}
+
+const KONTO_INFO = {
+  google: {text: "Kalender, Gmail, Drive", name: "Google"},
+  microsoft: {text: "Outlook, Kalender, OneDrive", name: "Microsoft"},
+  nas: {text: "Ordner auf deinem NAS, nur lesend", name: "NAS"},
+  browser: {text: "Öffentliche Webseiten öffnen und lesen"},
+  mail: {text: "IMAP/SMTP, Senden nur mit Freigabe", name: "Mail"},
+  home_assistant: {text: "Licht, Geräte, Sensoren", name: "Home Assistant"},
+};
+const runpod = () => zustand.umgebung?.laufzeit === "runpod";
+const ort = () => (runpod() ? "im Pod" : "auf der Box");
+const umgebungBanner = () => zustand.umgebung?.warnung
+  ? `<div class="banner gelb" role="alert">${ic("sicherheit")}<div><b>Nur Test-Konten verbinden</b>${esc(zustand.umgebung.warnung)}</div></div>` : "";
+const BEREICH_ANSICHT = {
+  konten: (b) => {
+    const c = zustand.connectoren;
+    const konten = ["google", "microsoft", "nas", "browser"];
+    const zeileC = (x) => {
+      const probleme = [x.signatur && "Gesperrt: " + x.signatur, x.quarantaene && "Quarantäne: " + (x.quarantaene.grund || ""),
+        !x.erreichbar && x.modus !== "aus" && "Nicht erreichbar", x.dns_fehlt?.length && "Domain fehlt: " + x.dns_fehlt.join(", ")].filter(Boolean);
+      const info = KONTO_INFO[x.name] || {};
+      return `<div class="zeile stapel" data-connector="${esc(x.name)}"><span class="sym">${ic(konten.includes(x.name) ? "konten" : "system")}</span>
+        <span class="txt"><b>${esc(x.titel.replace(/\s*\(.*\)$/, ""))}</b><small>${probleme.length ? `<span class="warn">${esc(probleme.join(" · "))}</span>` : esc(info.text || `${x.angeboten.length} Werkzeuge`)}</small>
+        ${x.quarantaene ? `<button class="knopf klein" style="margin-top:8px" data-freigeben>Aus Quarantäne freigeben</button>` : ""}</span>
+        <span class="segment">${Object.entries(MODUS).map(([k, v]) => `<button type="button" data-modus="${k}" class="${k === x.modus ? "an" : ""}">${v}</button>`).join("")}</span></div>`;
+    };
+    const sortiert = c ? [...c].sort((a, b2) => (konten.indexOf(b2.name) > -1) - (konten.indexOf(a.name) > -1)) : [];
+    return kopf(b, "Jeder Zugang lässt sich einzeln an, nur lesend oder ganz ausschalten. Nur lesen heißt: nichts senden, nichts ändern.") + umgebungBanner() +
+      (!c ? lade() : `<h2 class="abschnitt">Konten</h2><div class="gruppe">${sortiert.filter((x) => konten.includes(x.name)).map(zeileC).join("") || `<div class="zeile"><span class="leer">Keine Konten eingerichtet</span></div>`}</div>
+      <h2 class="abschnitt">Weitere Connectoren</h2><div class="gruppe">${sortiert.filter((x) => !konten.includes(x.name)).map(zeileC).join("")}</div>`) +
+      `<h2 class="abschnitt">Konto verbinden</h2><div class="karte">
+        <div class="klein" style="color:var(--zweit)">${runpod()
+          ? "Die Anmeldung läuft einmalig im Terminal des Pods. Befehl im QuLSI-Ordner ausführen und dem Link folgen:"
+          : "Die Anmeldung läuft einmalig auf der Box, damit dein Zugangsschlüssel den Tresor nie verlässt. Befehl im QuLSI-Ordner ausführen und dem Link folgen:"}</div>
+        ${!zustand.umgebung ? lade() : ["google", "microsoft", "nas", "mail", "home_assistant"].filter((n) => zustand.umgebung.befehle?.[n])
+          .map((n) => `<div style="margin-top:14px"><b style="font-weight:500">${KONTO_INFO[n].name}</b>${befehl(zustand.umgebung.befehle[n])}</div>`).join("")}
+      </div>`;
+  },
+  agenten: (b, e) => kopf(b, "Agents schicken dir Hinweise. Hier legst du fest, wann sie dich in Ruhe lassen.") + `
+    <div class="gruppe">
+      ${zeile("Ruhezeit", "Keine Hinweise aufs Handy, nur Agents mit Nachterlaubnis laufen", `<span class="reihe" style="align-items:center">
+        <input class="feld" type="time" id="ruhe-von" value="${esc(e.agenten.ruhezeit.split("-")[0] || "")}" style="width:auto">
+        <span class="klein">bis</span><input class="feld" type="time" id="ruhe-bis" value="${esc(e.agenten.ruhezeit.split("-")[1] || "")}" style="width:auto"></span>`, geaendert("agenten", "ruhezeit"))}
+      ${zeile("Ruhezeit aus", "Agents dürfen rund um die Uhr melden", `<label class="schalter"><input type="checkbox" id="ruhe-aus" ${e.agenten.ruhezeit ? "" : "checked"}><span></span></label>`)}
+      ${zeile("Höchstens Hinweise pro Stunde", "Mehr landen nur in der Timeline", zahlFeld("agenten", "max_hinweise_pro_stunde", e.agenten.max_hinweise_pro_stunde, "", 60), geaendert("agenten", "max_hinweise_pro_stunde"))}
+    </div>
+    <a class="zeile gruppe" href="#/agenten" style="border-radius:var(--r)"><span class="sym">${ic("agenten")}</span><span class="txt"><b>Agents ein- und ausschalten</b><small>${(zustand.agenten?.agenten || []).filter((a) => a.aktiv).length} von ${(zustand.agenten?.agenten || []).length} aktiv</small></span>${ic("pfeil", "i pfeil")}</a>`,
+  gedaechtnis: (b, e) => {
+    const m = e.gedaechtnis.memchip || {};
+    const o = e.gedaechtnis.organisator_letzter_lauf;
+    return kopf(b, "Der Memchip ist dein austauschbarer Speicher für das ganze Gedächtnis.") + `
+      <h2 class="abschnitt">Memchip</h2>
+      ${memchipBanner(m)}
+      <div class="gruppe">
+        ${zeile("Status", m.eingesteckt ? `${m.frei_gb} GB frei · ${m.verschluesselt ? "verschlüsselt" : `<span class=${m.verschluesselung === "fehlt" ? "rot" : "warn"}>nicht verschlüsselt</span>`}` : esc(m.hinweis || "Kein Memchip eingesteckt"),
+          `<span class="chip ${m.eingesteckt ? "gut" : ""}">${m.eingesteckt ? "Eingesteckt" : "Fehlt"}</span>`)}
+        ${zeile("Automatisch sichern", "Alle wie viele Stunden, 0 = aus. Die letzten 5 bleiben.", zahlFeld("gedaechtnis", "memchip_stunden", e.gedaechtnis.memchip_stunden, "Std.", 720), geaendert("gedaechtnis", "memchip_stunden"))}
+        ${zeile("Jetzt sichern", (m.sicherungen || [])[0] ? `Letzte: ${esc(m.sicherungen[0].zeit)} · ${m.sicherungen[0].mb} MB` : "Noch keine Sicherung", `<button class="knopf klein" id="memchip-sichern" ${m.eingesteckt && m.export_moeglich !== false ? "" : "disabled"}>Sichern</button>`)}
+      </div>
+      <p class="hinweis">Einen Memchip einspielen geht absichtlich nur mit Freigabe: sag im Gespräch „Lade das Gedächtnis vom Memchip“.</p>
+      <h2 class="abschnitt">Organisator</h2>
+      <div class="gruppe">
+        ${zeile("Einsortieren alle", "Termine, Mails, Fotos und Dateien ins Gedächtnis, 0 = aus", zahlFeld("gedaechtnis", "organisator_minuten", e.gedaechtnis.organisator_minuten, "Min.", 1440), geaendert("gedaechtnis", "organisator_minuten"))}
+        ${zeile("Jetzt einsortieren", o?.zeit ? "Zuletzt " + new Date(o.zeit).toLocaleString("de-DE", {dateStyle: "short", timeStyle: "short"}) : "Seit dem Start noch nicht gelaufen", `<button class="knopf klein" id="organisieren">Starten</button>`)}
+      </div>`;
+  },
+  modelle: (b, e) => {
+    const m = e.modelle;
+    const name = (x) => m.titel?.[x] || x;
+    const optionen = (rolle) => {
+      if (rolle === "vision" && m.bilder?.verfuegbar === false) return `<span class="chip">${esc(m.bilder.hinweis || "nicht verfügbar")}</span>`;
+      const liste2 = [...new Set([...(m.verfuegbar || []), m.rollen[rolle], m.grund[rolle]].filter((x) => x && x !== "aus"))];
+      return `<select class="wahl" data-bereich="modelle" data-schluessel="${rolle}">${liste2.map((x) => `<option value="${esc(x)}" ${x === m.rollen[rolle] ? "selected" : ""}>${esc(name(x))}</option>`).join("")}
+        ${rolle !== "standard" ? `<option value="aus" ${m.rollen[rolle] === "aus" ? "selected" : ""}>${esc(m.titel?.aus || "Aus")}</option>` : ""}</select>`;
+    };
+    return kopf(b, "QuLSI wählt für jede Anfrage das passende Modell. Hier legst du fest, welches Modell welche Rolle übernimmt.") + `
+      <div class="gruppe">
+        ${zeile("Standard", "Gespräch, Fragen, Werkzeuge", optionen("standard"), geaendert("modelle", "standard"))}
+        ${zeile("Klein", "Kurze Befehle, sehr schnell. Aus = Standard übernimmt.", optionen("klein"), geaendert("modelle", "klein"))}
+        ${zeile("Groß (Denkmodus)", "Analyse, Planung. Nie per Stimme.", optionen("gross"), geaendert("modelle", "gross"))}
+        ${zeile("Bilder", m.bilder?.verfuegbar === false ? "Fragen zu Fotos und Kamerabildern. Dafür fehlt auf dieser Box noch das Bildmodell." : "Fragen zu Fotos und Kamerabildern", optionen("vision"), geaendert("modelle", "vision"))}
+      </div>
+      <h2 class="abschnitt">Wann welches Modell</h2>
+      <div class="gruppe">
+        ${zeile("Großes Modell ab", "Lange Nachrichten bekommen den Denkmodus", zahlFeld("modelle", "gross_ab_zeichen", m.gross_ab_zeichen, "Zeichen", 10000), geaendert("modelle", "gross_ab_zeichen"))}
+        ${zeile("Kleines Modell bis", "Kurze Befehle mit Stichwort", zahlFeld("modelle", "klein_bis_zeichen", m.klein_bis_zeichen, "Zeichen", 1000), geaendert("modelle", "klein_bis_zeichen"))}
+      </div>
+      <p class="hinweis">${m.verfuegbar?.length ? "Zur Auswahl stehen die Modelle, die auf der Box eingetragen sind." : "Die Modell-Liste ist gerade nicht erreichbar."} Ein neues Modell (z. B. ein Cloud-Modell) wird einmal in <code>config/litellm.yaml</code> eingetragen und erscheint dann hier.</p>`;
+  },
+  stimme: (b, e) => {
+    const s = e.stimme;
+    const sprecherZeile = (s) => {
+      if (!Array.isArray(s.auswahl))  // älterer Core ohne Auswahlliste
+        return zeile("Sprecher", "Nur bei Qwen3-TTS, leer = Standard. Eigene Stimme: siehe unten.", `<input class="feld" style="width:150px;text-align:left" value="${esc(s.stimme)}" placeholder="Standard" data-bereich="stimme" data-schluessel="stimme">`, geaendert("stimme", "stimme"));
+      if (!s.auswahl.length) return zeile("Sprecher", `<span class="warn">Sprachdienst nicht erreichbar</span>`, "");
+      const text = s.eigene_vorhanden ? "Gilt ab dem nächsten Satz, ohne Neustart" : "Eigene Stimme: erst eine Stimmprobe aufnehmen (unten)";
+      return zeile("Sprecher", text, `<select class="wahl" data-bereich="stimme" data-schluessel="stimme" aria-label="Sprecher">${s.auswahl.map((o) =>
+        `<option value="${esc(o.id)}" ${o.id === s.aktiv ? "selected" : ""}>${esc(o.name)}${o.hinweis ? " · " + esc(o.hinweis) : ""}</option>`).join("")}</select>`);
+    };
+    return kopf(b, "Wie QuLSI spricht und ob Antworten auf Sprachfragen vorgelesen werden.") + `
+      <div class="gruppe">
+        ${zeile("Stimmen-Modell", s.erreichbar ? `Läuft auf der Grafikkarte${s.ersatz ? " · fällt es aus, spricht " + esc(anbieterName(s.ersatz)) : ""}` : "<span class=warn>Sprachdienst nicht erreichbar</span>",
+          `<span class="chip ${s.erreichbar ? "gut" : "warn"}">${esc(anbieterName(s.modell || s.tts))}</span>`)}
+        ${sprecherZeile(s)}
+        ${zeile("Antworten vorlesen", "Nach einer Sprachfrage in der App", `<label class="schalter"><input type="checkbox" id="vorlesen" ${s.vorlesen !== false ? "checked" : ""}><span></span></label>`)}
+        ${zeile("Probehören", "", `<button class="knopf klein" id="probe">${ic("play")}Abspielen</button>`)}
+      </div>
+      <h2 class="abschnitt">Modell wechseln</h2>
+      <div class="karte"><div class="klein" style="color:var(--zweit)">Zur Wahl stehen CosyVoice 3, Qwen3-TTS und Chatterbox. Ein Wechsel lädt ein neues Modell und geht deshalb ${runpod()
+          ? "im Pod: <code>TTS_MODELL</code> in <code>/workspace/qulsi-data/env</code> ändern und den Pod neu starten.</div>"
+          : `auf der Box: <code>TTS_MODELL</code> in der .env ändern, dann</div>${befehl("docker compose build tts && docker compose --profile setup run --rm tts-modell && docker compose --profile box up -d tts")}`}</div>
+      <h2 class="abschnitt">Eigene Stimme</h2>${stimmprobeKarte()}`;
+  },
+  sicherheit: (b, e) => {
+    const s = e.sicherheit, g = s.grund;
+    const STRENG = {erlaubt: 0, bestaetigung: 1, verboten: 2};
+    const lockerer = (basis) => (w) => STRENG[w] < STRENG[basis];
+    const pin = zustand.pin;
+    return kopf(b, "In der App kannst du alles strenger stellen. Lockerer geht nur direkt " + ort() + ", damit ein gestohlenes Handy keine Schutzregeln abschalten kann.") + umgebungBanner() + `
+      <h2 class="abschnitt">Freigaben in der App</h2>
+      <div class="gruppe">
+        ${zeile("Freigabe-PIN", pin?.eingerichtet ? "Erlauben geht in der App mit PIN, Ablehnen ohne" : "Noch nicht festgelegt: ohne PIN kannst du nur ablehnen",
+          pin?.eingerichtet ? `<span class="reihe" style="gap:8px;flex-wrap:nowrap;align-items:center"><span class="chip gut">Gesetzt</span>${pinAendernOffen || pinMitCode ? "" : `<button class="knopf klein" id="pin-aendern">Ändern</button>`}</span>`
+            : `<span class="chip warn">Fehlt</span>`)}
+      </div>
+      ${!pin?.eingerichtet || pinAendernOffen || pinMitCode ? pinFormular() : ""}
+      <h2 class="abschnitt">Fremde Inhalte im Gespräch</h2>
+      <div class="gruppe">
+        ${zeile("Normale Aktionen", "Nachdem Mails, Webseiten oder Dateien gelesen wurden", segment("sicherheit", "belastet_medium", [["erlaubt", "Erlaubt"], ["bestaetigung", "Freigabe"], ["verboten", "Verboten"]], s.belastet_medium, lockerer(g.belastet_medium)), geaendert("sicherheit", "belastet_medium"))}
+        ${zeile("Kritische Aktionen", "Mail senden, Tür öffnen …", segment("sicherheit", "belastet_high", [["bestaetigung", "Freigabe"], ["verboten", "Verboten"]], s.belastet_high, lockerer(g.belastet_high)), geaendert("sicherheit", "belastet_high"))}
+        ${zeile("Agents ohne Erlaubnis", "Normale Aktionen von Hintergrund-Agents", segment("sicherheit", "automatik_medium", [["bestaetigung", "Freigabe"], ["verboten", "Verboten"]], s.automatik_medium, lockerer(g.automatik_medium)), geaendert("sicherheit", "automatik_medium"))}
+      </div>
+      <h2 class="abschnitt">Zeit und Grenzen</h2>
+      <p class="hinweis" style="margin:-4px 6px 10px">Wie lange eine Freigabe gilt und wie oft QuLSI ein Werkzeug pro Stunde benutzen darf.</p>
+      <div class="gruppe">
+        ${zeile("Freigabe gültig", `So lange wartet eine Freigabe auf dich, dann verfällt sie. Jetzt ${dauer(s.bestaetigung_sekunden)}, höchstens ${dauer(g.bestaetigung_sekunden)}.`,
+          zahlFeld("sicherheit", "bestaetigung_sekunden", s.bestaetigung_sekunden, "Sekunden", g.bestaetigung_sekunden), geaendert("sicherheit", "bestaetigung_sekunden"))}
+        ${[["low", "Lesen und suchen", "z. B. Mails durchsuchen, Termine ansehen"], ["medium", "Normale Aktionen", "z. B. Termin anlegen, Entwurf schreiben"], ["high", "Kritische Aktionen", "z. B. Mail senden, Tür öffnen"]].map(([st, t, bsp]) =>
+          zeile(t, `${bsp}. Höchstens ${g.limits[st]}.`,
+            zahlFeld("sicherheit", "limit_" + st, s.limits[st], "pro Std.", g.limits[st]), geaendert("sicherheit", "limit_" + st))).join("")}
+      </div>
+      <h2 class="abschnitt">Was QuLSI darf</h2>
+      <div class="legende">
+        <span><b>Frei</b> ohne Rückfrage</span><span><b>Normal</b> frei, außer nach fremden Inhalten</span>
+        <span><b>Freigabe</b> immer erst fragen</span><span><b>Gesperrt</b> QuLSI kann es nicht</span>
+      </div>
+      ${werkzeugBereiche(s.werkzeuge)}`;
+  },
+  benachrichtigungen: (b, e) => {
+    const n = e.benachrichtigungen;
+    const adr = ntfyAdresse(n);
+    const nutzbar = n.eingerichtet && adr;
+    const thema = n.thema || "";
+    const leicht = thema.length < 12 && !n.token;
+    const hinweis = `<p class="hinweis">Wohin die Freigabe-Knöpfe gehen, lässt sich absichtlich nur ${ort()} ändern. Sonst könnte jemand mit deinem App-Schlüssel sich die Freigaben selbst schicken.</p>`;
+    if (!nutzbar) return kopf(b, "Termine, Hinweise und offene Freigaben kommen als Mitteilung aufs Handy und auf die Uhr. Freigeben geht nur in der App mit PIN.") + pushBereich();
+    return kopf(b, "Termine, Hinweise und offene Freigaben kommen als Mitteilung aufs Handy und auf die Uhr. Zusätzlich über die App ntfy.") + pushBereich() + `
+      <h2 class="abschnitt">ntfy (zusätzlich, optional)</h2>
+      <div class="gruppe">
+        ${zeile("Status", esc(adr.anzeige), `<span class="chip gut">Aktiv</span>`)}
+        ${zeile("Thema", "Dein privater Kanal für QuLSI", `<span class="wert">${esc(themaVerdeckt(thema))}</span>`)}
+        ${zeile("Zugriffsschutz", n.token ? "Nur mit Zugangsdaten lesbar" : `<span class="warn">Aus: wer das Thema kennt, kann mitlesen</span>`,
+          `<span class="chip ${n.token ? "gut" : "warn"}">${n.token ? "An" : "Aus"}</span>`)}
+        ${zeile("Test", "Schickt eine Nachricht an dein Handy", `<button class="knopf klein" id="ntfy-test">Senden</button>`)}
+      </div>
+      ${leicht ? `<div class="banner gelb" style="margin-bottom:14px">${ic("sicherheit")}<div><b>Thema leicht zu erraten</b>Ohne Zugriffsschutz sollte das Thema lang und zufällig sein. Das lässt sich ${ort()} ändern.</div></div>` : ""}
+      <h2 class="abschnitt">Aufs Handy holen</h2>
+      <div class="karte">
+        <ol class="schritte">
+          <li>Die App ntfy installieren: <a href="https://apps.apple.com/app/ntfy/id1625396347" target="_blank" rel="noopener">iPhone</a> oder <a href="https://play.google.com/store/apps/details?id=io.heckel.ntfy" target="_blank" rel="noopener">Android</a>.</li>
+          <li>Auf dem Handy „In ntfy öffnen“ tippen. Am Laptop stattdessen den QR-Code mit der Handy-Kamera scannen.</li>
+          <li>Fragt die App nach einem Server, „Anderen Server verwenden“ wählen und <b>${esc(adr.anzeige)}</b> eintragen.${n.token ? " Bei „Benutzer“ die Zugangsdaten für diesen Server hinterlegen." : ""}</li>
+          <li>Oben „Senden“ tippen. Kommt die Nachricht an, bist du fertig.</li>
+        </ol>
+        <div class="reihe" style="margin-top:14px">
+          <a class="knopf hell" href="${esc(adr.app)}">In ntfy öffnen</a>
+          <button class="knopf" type="button" id="ntfy-qr-knopf">${ntfyQr ? "QR-Code verbergen" : "QR-Code zeigen"}</button>
+        </div>
+        ${ntfyQr ? `<div class="qr">${qrSvg(adr.web)}<div class="klein">Enthält dein Thema. Nicht weitergeben.</div></div>` : ""}
+      </div>${hinweis}`;
+  },
+  system: (b, e) => kopf(b, "Dein Name, Verbindung, Internet und dieses Gerät.") + `
+    <div class="gruppe">
+      <div class="zeile" style="flex-direction:column;align-items:stretch;gap:10px"><span class="txt"><b>Wie soll QuLSI dich nennen?</b><small>${zustand.nutzer?.name ? "Leer speichern, dann begrüßt QuLSI dich ohne Namen" : "Noch kein Name: QuLSI begrüßt dich ohne"}</small></span>
+        <form class="reihe" id="name-form" style="flex-wrap:nowrap"><input class="feld" id="name-feld" maxlength="40" autocomplete="given-name" placeholder="Vorname" value="${esc(zustand.nutzer?.name || "")}" style="text-align:left;flex:1;width:auto;max-width:none"><button class="knopf klein">Speichern</button></form></div>
+      <div class="zeile stapel"><span class="txt"><b>Bundesland</b><small>Für die Feiertage dort, wo die Box steht</small></span>
+        <select class="wahl" id="bundesland">${[["", "Keins"], ...Object.entries(BUNDESLAENDER)].map(([k, t]) =>
+          `<option value="${k}" ${(zustand.nutzer?.bundesland || "") === k ? "selected" : ""}>${t}</option>`).join("")}</select></div>
+    </div>
+    <div class="gruppe">
+      ${zeile("Internet", e.system.jetzt_offline ? "Gerade offline: nur lokale Funktionen" : "Gerade online",
+        segment("system", "offline", [["auto", "Automatisch"], ["true", "Offline"], ["false", "Online"]], e.system.offline), geaendert("system", "offline"))}
+      ${zeile("Adresse der Box", "Unter dieser Adresse erreichst du QuLSI", `<span class="wert">${esc(e.system.public_url)}</span>`)}
+      ${zeile("Zeitzone", "", `<span class="wert">${esc(e.system.zeitzone)}</span>`)}
+      ${zeile("Version", e.system.version ? (e.system.gebaut ? "Gebaut am " + new Date(e.system.gebaut).toLocaleString("de-DE", {day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: e.system.zeitzone || undefined}) + " Uhr" : "Baudatum unbekannt") : "Dieses Paket hat keine Versionsangabe",
+        `<span class="wert">${esc(e.system.version || "unbekannt")}</span>`)}
+    </div>
+    <p class="hinweis">Offline heißt: QuLSI geht nicht ins Internet, Mails und Web-Suche pausieren, alles Lokale läuft weiter.</p>
+    <h2 class="abschnitt">Dieses Gerät</h2>
+    <div class="gruppe">
+      ${zeile("Auf den Home-Bildschirm", "Safari: Teilen, dann „Zum Home-Bildschirm“", "")}
+      <button class="zeile" id="abmelden"><span class="txt"><b class="rot">Abmelden</b><small>App-Schlüssel auf diesem Gerät löschen</small></span></button>
+    </div>`,
+  box: (b) => {
+    const bf = zustand.umgebung?.befehle || {};
+    const BALD = [
+      ["Passwörter und Zugangsschlüssel", "Zum Beispiel für dein NAS oder dein Mail-Postfach. Du gibst sie bald direkt in der App ein und bestätigst mit deiner PIN.", bf.geheimnis],
+      ["Konten anmelden", "Google und Microsoft verbindest du bald direkt in der App, ebenfalls mit deiner PIN bestätigt.", bf.google],
+    ];
+    const BOX = [
+      ["Einrichtungscode für die Freigabe-PIN", "Eine neue PIN legst du in der App fest. Den Code dafür zeigt nur die Box, damit niemand aus der Ferne deine PIN ändert.", bf.freigabe_pin || "…"],
+      ["Werkzeuge der Agents", "Welche Werkzeuge ein Hintergrund-Agent benutzen und ohne Rückfrage einsetzen darf.", "config/agenten.yaml"],
+      ["Schutzregeln lockern", "Strenger stellen geht in der App. Lockerer nur hier, damit ein gestohlenes Handy nichts freischalten kann.", "config/policy.yaml"],
+      ["Neue KI-Modelle", "Weitere Modelle hinzufügen, lokal auf der Box oder aus der Cloud.", "config/litellm.yaml"],
+      ["Stimmen-Modell wechseln", "Ein anderes Stimmen-Modell laden. Das dauert etwas, weil der Sprachdienst neu gebaut wird.", ".env: TTS_MODELL"],
+      ["Grafikspeicher", "Wie viel sich die Modelle auf einmal merken und wann sie schlafen gehen, um Speicher zu sparen.", ".env: BONSAI_CTX, BONSAI_KV, *_LEERLAUF_SEKUNDEN"],
+      ["Kameras", "Welche Kameras QuLSI sieht und welche Bereiche sie beobachtet.", ".env: KAMERA_*  ·  config/cameras.yaml"],
+      ["Netzwerk", "Wer die Box im Netz erreichen darf.", ".env: BIND_IP  ·  scripts/firewall.sh"],
+      ["Neue Erweiterungen", "Neue Connectoren müssen erst unterschrieben werden, sonst lädt QuLSI sie nicht.", "scripts/signieren.py"],
+      ...(bf.daten_zeigen ? [["Gespeicherte Daten ansehen", "Zeigt, was QuLSI im Pod gespeichert hat und wie viel Platz es braucht.", bf.daten_zeigen]] : []),
+      ...(bf.daten_leeren ? [["Alle Daten löschen", "Löscht Gedächtnis, Konten und Einstellungen im Pod. Das lässt sich nicht rückgängig machen.", bf.daten_leeren]] : []),
+    ];
+    const fach = (t, w) => `<div class="zeile"><span class="txt"><b>${t}</b><div class="befehl" style="margin-top:6px"><code>${esc(w)}</code></div></span></div>`;
+    return kopf(b, `Ein paar Dinge gehen mit Absicht nur direkt ${ort()}. So kann niemand mit deinem Handy oder App-Schlüssel die Schutzregeln aushebeln.`) + umgebungBanner() + `
+    <h2 class="abschnitt">Kommt in die App</h2>
+    <div class="gruppe">
+      ${BALD.map(([t, s]) => zeile(t, s, `<span class="chip">Bald</span>`)).join("")}
+    </div>
+    <h2 class="abschnitt">Bleibt auf der Box</h2>
+    <div class="gruppe">
+      ${BOX.map(([t, s]) => zeile(t, s, "")).join("")}
+    </div>
+    <details class="gruppe bereich" data-bereich-id="fachleute" ${offeneBereiche.has("fachleute") ? "open" : ""}>
+      <summary class="zeile"><span class="sym">${ic("system")}</span><span class="txt"><b>Für Fachleute</b><small>Wo das auf der Box steht: Dateien und Befehle</small></span>${ic("pfeil", "i auf")}</summary>
+      ${BOX.map(([t, , w]) => fach(t, w)).join("")}
+      ${BALD.filter(([, , w]) => w).map(([t, , w]) => fach(t + " (bis es in der App geht)", w)).join("")}
+    </details>`;
+  },
+};
+// ---------------------------------------------------------------- Stimmprobe: aufnehmen, als WAV hochladen, Freigabe
+const probe = {aufnahme: null, blob: null, sekunden: 0, uhr: null, laeuft: false, fehler: "", text: "Hallo, das ist meine Stimme für QuLSI. Ich spreche ruhig und ganz normal, so wie im Alltag."};
+function stimmprobeKarte() {
+  const p = zustand.probe;
+  if (!p) return `<div class="karte">${lade()}</div>`;
+  if (!p.klonen) return `<div class="karte"><div class="klein" style="color:var(--zweit)">${esc(p.hinweis || "Das aktuelle Stimmen-Modell kann keine eigene Stimme lernen.")}</div></div>`;
+  const offen = p.offen && zustand.freigaben.find((f) => f.id === p.offen);
+  if (p.offen) return `<div class="karte"><h3 class="warn">${ic("sicherheit")}Neue Stimme wartet auf Freigabe</h3>
+    ${offen ? freigabeKarte(offen) : `<div class="klein">Sie erscheint gleich unter Heute zum Erlauben.</div>`}</div>`;
+  const dauer = probe.sekunden.toFixed(1).replace(".", ",");
+  return `<div class="karte">
+    <div class="klein" style="color:var(--zweit)">${!p.vorhanden ? "Die Probe wird erst nach deiner Freigabe übernommen." : (zustand.einst?.stimme?.aktiv && zustand.einst.stimme.aktiv !== "eigene") ? "Deine eigene Stimme ist gespeichert. Oben unter Sprecher kannst du zu ihr wechseln. Eine neue Probe ersetzt sie nach deiner Freigabe." : "Gerade spricht QuLSI mit deiner eigenen Stimme. Eine neue Probe ersetzt sie nach deiner Freigabe."}</div>
+    <ul class="tipps klein">
+      <li>Leiser Raum, kein Fernseher, kein Hall</li>
+      <li>Handy etwa 20 cm vor dem Mund</li>
+      <li>10 bis 15 Sekunden ruhig und normal sprechen</li>
+      <li>Genau den Text unten vorlesen</li>
+    </ul>
+    <label class="klein" for="probe-text" style="display:block;margin:14px 0 6px"><b>Text, den du vorliest</b> · nötig: QuLSI lernt die Stimme aus Ton und Text zusammen. Änderst du ihn, lies genau das Geänderte.</label>
+    <textarea class="feld" id="probe-text" maxlength="500" required>${esc(probe.text)}</textarea>
+    <div class="klein warn" id="probe-text-fehlt" ${probe.text.trim() ? "hidden" : ""} style="margin-top:6px">Ohne Text klingt die Stimme deutlich schlechter. Bitte eintragen, was du sagst.</div>
+    <div class="aufnahme">
+      <button type="button" class="rund gross ${probe.laeuft ? "an" : ""}" id="probe-rec" aria-label="${probe.laeuft ? "Aufnahme beenden" : "Aufnehmen"}">${ic(probe.laeuft ? "stop" : "mic")}</button>
+      <span class="uhr" id="probe-uhr">${dauer} s</span>
+      <span class="klein">${probe.laeuft ? "Aufnahme läuft, stoppt bei 15 s" : probe.blob ? "Aufgenommen" : "Tippen zum Aufnehmen, 10 bis 15 s"}</span>
+    </div>
+    ${probe.blob && !probe.laeuft ? `<audio controls src="${probe.url}" style="width:100%;margin-top:12px"></audio>` : ""}
+    ${probe.fehler ? `<div class="klein rot" style="margin-top:10px">${esc(probe.fehler)}</div>` : ""}
+    <div class="reihe" style="margin-top:14px">
+      <button class="knopf hell" id="probe-senden" ${probe.blob && !probe.laeuft && probe.sekunden >= 5 && probe.text.trim() ? "" : "disabled"}>Als neue Stimme vorschlagen</button>
+      <label class="knopf" style="cursor:pointer">Datei wählen<input type="file" accept="audio/*" id="probe-datei" hidden></label>
+    </div></div>`;
+}
+function stimmprobeVerdrahten(el) {
+  freigabenVerdrahten(el);
+  $("probe-text")?.addEventListener("input", (ev) => {
+    probe.text = ev.target.value;
+    if ($("probe-text-fehlt")) $("probe-text-fehlt").hidden = !!probe.text.trim();
+    if ($("probe-senden")) $("probe-senden").disabled = !(probe.blob && !probe.laeuft && probe.sekunden >= 5 && probe.text.trim());
+  });
+  $("probe-rec")?.addEventListener("click", probeAufnahme);
+  $("probe-senden")?.addEventListener("click", probeSenden);
+  $("probe-datei")?.addEventListener("change", async (ev) => {
+    const f = ev.target.files[0];
+    if (!f) return;
+    probe.fehler = "";
+    try { await probeSetzen(f); } catch (e) { probe.fehler = "Die Datei lässt sich nicht lesen."; }
+    route();
+  });
+}
+async function probeSetzen(blob) {
+  const wav = await alsWav(blob);
+  probe.blob = wav.blob; probe.sekunden = wav.sekunden;
+  if (probe.url) URL.revokeObjectURL(probe.url);
+  probe.url = URL.createObjectURL(wav.blob);
+  if (wav.sekunden < 5) probe.fehler = "Zu kurz: bitte 10 bis 15 Sekunden sprechen.";
+  else if (wav.sekunden < 10) probe.fehler = "Geht, aber mit 10 bis 15 Sekunden klingt die Stimme besser.";
+  if (wav.sekunden > 15.5) probe.fehler = "Zu lang: höchstens 15 Sekunden.";
+}
+async function probeAufnahme() {
+  if (probe.aufnahme) { probe.aufnahme.stop(); return; }
+  if (!navigator.mediaDevices) { melden("Das Mikrofon braucht eine sichere Verbindung (HTTPS).", true); return; }
+  let strom;
+  try { strom = await navigator.mediaDevices.getUserMedia({audio: {noiseSuppression: true, echoCancellation: true, channelCount: 1}}); }
+  catch (e) { melden("Kein Zugriff aufs Mikrofon.", true); return; }
+  const teile = [];
+  const rec = new MediaRecorder(strom);
+  probe.aufnahme = rec; probe.laeuft = true; probe.blob = null; probe.fehler = ""; probe.sekunden = 0;
+  const start = Date.now();
+  probe.uhr = setInterval(() => {
+    probe.sekunden = (Date.now() - start) / 1000;
+    if ($("probe-uhr")) $("probe-uhr").textContent = probe.sekunden.toFixed(1).replace(".", ",") + " s";
+    if (probe.sekunden >= 15) rec.stop();
+  }, 100);
+  rec.ondataavailable = (e) => teile.push(e.data);
+  rec.onstop = async () => {
+    clearInterval(probe.uhr);
+    strom.getTracks().forEach((t) => t.stop());
+    probe.aufnahme = null; probe.laeuft = false;
+    try { await probeSetzen(new Blob(teile, {type: rec.mimeType})); } catch (e) { probe.fehler = "Aufnahme ließ sich nicht umwandeln."; }
+    route();
+  };
+  rec.start();
+  route();
+}
+async function probeSenden(ev) {
+  ev.currentTarget.disabled = true;
+  const fd = new FormData();
+  fd.append("audio", probe.blob, "stimme.wav");
+  if (probe.text.trim()) fd.append("text", probe.text.trim().slice(0, 500));
+  try {
+    const r = await (await api("/api/stimme/probe", {method: "POST", body: fd})).json();
+    melden(r.handy ? "Gesendet. Bitte freigeben" : "Gesendet. Bitte hier freigeben");
+    probe.blob = null; probe.sekunden = 0;
+  } catch (e) {
+    probe.fehler = e.status === 422 ? "Die Probe ist zu kurz oder zu leise. Bitte 10 bis 15 Sekunden deutlich sprechen und neu aufnehmen."
+      : e.status === 413 ? "Die Datei ist zu groß. Bitte höchstens 15 Sekunden." : e.message;
+  }
+  await Promise.all([probeLaden(), freigabenLaden()]);
+}
+async function probeLaden() {
+  try { zustand.probe = await holen("/api/stimme/probe"); } catch (e) { zustand.probe = {klonen: false, hinweis: "Stimmprobe gerade nicht erreichbar."}; }
+  if (location.hash.includes("einstellungen/stimme") && !probe.laeuft) route();
+}
+// Browser-Aufnahme (webm/ogg/mp4) oder Datei -> 16-Bit-PCM-WAV, mono, 24 kHz
+async function alsWav(blob) {
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const daten = await blob.arrayBuffer();
+  const quelle = await new Promise((ok, nein) => { const p = ctx.decodeAudioData(daten, ok, nein); if (p?.then) p.then(ok, nein); });
+  ctx.close?.();
+  const rate = 24000, laenge = Math.ceil(quelle.duration * rate);
+  const off = new OfflineAudioContext(1, laenge, rate);
+  const q = off.createBufferSource();
+  q.buffer = quelle; q.connect(off.destination); q.start();
+  const pcm = (await off.startRendering()).getChannelData(0);
+  const buf = new ArrayBuffer(44 + pcm.length * 2), v = new DataView(buf);
+  const str = (o, t) => [...t].forEach((c, i) => v.setUint8(o + i, c.charCodeAt(0)));
+  str(0, "RIFF"); v.setUint32(4, 36 + pcm.length * 2, true); str(8, "WAVE"); str(12, "fmt ");
+  v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true); v.setUint32(24, rate, true);
+  v.setUint32(28, rate * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); str(36, "data"); v.setUint32(40, pcm.length * 2, true);
+  for (let i = 0; i < pcm.length; i++) v.setInt16(44 + i * 2, Math.max(-1, Math.min(1, pcm[i])) * 0x7fff, true);
+  return {blob: new Blob([buf], {type: "audio/wav"}), sekunden: quelle.duration};
+}
+const anbieterName = (a) => ({piper: "Piper", openai: "Eigener Server", cosyvoice3: "CosyVoice 3", "qwen3-tts": "Qwen3-TTS", chatterbox: "Chatterbox", fake: "Testton"}[a] || a || "–");
+
+function bereicheMerken(el) {
+  el.querySelectorAll("details.bereich").forEach((d) => d.addEventListener("toggle", () =>
+    d.open ? offeneBereiche.add(d.dataset.bereichId) : offeneBereiche.delete(d.dataset.bereichId)));
+}
+const BEREICH_NACH = {
+  box: bereicheMerken,
+  konten: (el) => {
+    el.querySelectorAll("[data-connector]").forEach((z) => {
+      const name = z.dataset.connector;
+      z.querySelectorAll("[data-modus]").forEach((b) => b.addEventListener("click", async () => {
+        try { await api("/api/connectoren/" + name, {json: {modus: b.dataset.modus}}); melden(MODUS[b.dataset.modus]); }
+        catch (e) { melden(e.message, true); }
+        connectorenLaden();
+      }));
+      z.querySelector("[data-freigeben]")?.addEventListener("click", async () => {
+        try { await api("/api/connectoren/" + name + "/freigeben", {method: "POST"}); melden("Freigegeben"); } catch (e) { melden(e.message, true); }
+        connectorenLaden();
+      });
+    });
+  },
+  agenten: () => {
+    const speichern = () => {
+      const von = $("ruhe-von").value, bis = $("ruhe-bis").value;
+      if (von && bis) setzen("agenten", {ruhezeit: `${von}-${bis}`});
+    };
+    $("ruhe-von").addEventListener("change", speichern);
+    $("ruhe-bis").addEventListener("change", speichern);
+    $("ruhe-aus").addEventListener("change", (ev) => setzen("agenten", {ruhezeit: ev.target.checked ? "" : "22:00-07:00"}));
+  },
+  gedaechtnis: () => {
+    $("memchip-sichern").addEventListener("click", (ev) => aktion(ev.currentTarget, "memchip-sichern", "Gesichert"));
+    $("organisieren").addEventListener("click", (ev) => aktion(ev.currentTarget, "organisieren", "Einsortiert"));
+  },
+  stimme: (el) => {
+    stimmprobeVerdrahten(el);
+    $("vorlesen").addEventListener("change", (ev) => setzen("stimme", {vorlesen: ev.target.checked}));
+    $("probe").addEventListener("click", () => vorlesen(zustand.nutzer?.name ? `Hallo ${zustand.nutzer.name}, so klinge ich gerade.` : "Hallo, so klinge ich gerade."));
+  },
+  sicherheit: (el) => {
+    bereicheMerken(el);
+    pinVerdrahten(el, () => route());
+    $("pin-aendern")?.addEventListener("click", () => { pinAendernOffen = true; route(); setTimeout(() => $("pin-alt")?.focus(), 60); });
+    el.querySelectorAll("[data-stufe] button").forEach((b) => b.addEventListener("click", () =>
+      setzen("sicherheit", {stufen: {[b.parentElement.dataset.stufe]: b.dataset.wert}})));
+    el.querySelectorAll("[data-stufe-zurueck]").forEach((x) => x.addEventListener("click", () =>
+      setzen("sicherheit", {stufen: {[x.dataset.stufeZurueck]: null}}, "Zurückgesetzt")));
+  },
+  benachrichtigungen: () => {
+    bereicheMerken(document);
+    $("ntfy-test")?.addEventListener("click", (ev) => aktion(ev.currentTarget, "benachrichtigung-testen", "Gesendet"));
+    $("ntfy-qr-knopf")?.addEventListener("click", () => { ntfyQr = !ntfyQr; route(); });
+    pushVerdrahten();
+  },
+  system: () => {
+   $("bundesland").addEventListener("change", async (ev) => {
+    const bundesland = ev.target.value || null;
+    try {
+      const r = await (await api("/api/nutzer", {json: {bundesland}})).json();
+      if (r && !("bundesland" in r)) { melden("Das kann die Box noch nicht speichern, kommt mit dem nächsten Update.", true); ev.target.value = zustand.nutzer?.bundesland || ""; return; }
+      zustand.nutzer = {...zustand.nutzer, ...r};
+      melden(bundesland ? BUNDESLAENDER[bundesland] + " gespeichert" : "Kein Bundesland");
+    } catch (e) { melden(e.message, true); ev.target.value = zustand.nutzer?.bundesland || ""; }
+   });
+   $("name-form").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const name = $("name-feld").value.trim() || null;
+    try {
+      const r = await (await api("/api/nutzer", {json: {name}})).json();
+      zustand.nutzer = {...zustand.nutzer, ...r, name: r?.name ?? name};
+      melden(name ? "Gespeichert" : "Name entfernt");
+    } catch (e) { melden(e.message, true); }
+    route();
+   });
+   $("abmelden").addEventListener("click", () => {
+    try { localStorage.removeItem("qulsi-key"); } catch (e) {}
+    if (quelle) quelle.close();
+    fetch("/api/sitzung", {method: "DELETE"}).catch(() => {});
+    sitzungBereit = null;
+    key = "";
+    anmelden(true);
+   });
+  },
+};
+async function aktion(knopf, name, ok) {
+  knopf.disabled = true;
+  try { await api("/api/einstellungen/aktion/" + name, {method: "POST"}); melden(ok); }
+  catch (e) { melden(e.message, true); }
+  knopf.disabled = false;
+  einstLaden();
+}
+
+// ---------------------------------------------------------------- Daten laden
+async function einstLaden() {
+  try { zustand.einst = await holen("/api/einstellungen"); zustand.einstFehler = null; }
+  catch (e) { zustand.einstFehler = "Einstellungen nicht erreichbar: " + e.message; }
+  if (aktuelleAnsicht() === "einstellungen") route();
+}
+async function connectorenLaden() {
+  try { zustand.connectoren = await holen("/api/connectoren"); } catch (e) {}
+  if (aktuelleAnsicht() === "einstellungen") route();
+}
+async function aktualisieren() {
+  try {
+    const [h, f, t, p] = await Promise.all([holen("/api/heute"), holen("/api/freigaben"), holen("/api/timeline"),
+      holen("/api/freigaben/pin").catch(() => zustand.pin)]);
+    zustand.heute = h; zustand.freigaben = f; zustand.timeline = Array.isArray(t) ? t : []; zustand.pin = p;
+    statusZeigen(h.offline);
+  } catch (e) { console.warn(e); return; }
+  if (aktuelleAnsicht() === "heute" && !$("blatt")) route(); else menueZeichnen(aktuelleAnsicht());
+}
+async function umgebungLaden() {
+  try { zustand.umgebung = await holen("/api/umgebung"); } catch (e) {}
+  if (aktuelleAnsicht() === "einstellungen") route();
+}
+async function gedaechtnisLaden() {
+  try { zustand.gedaechtnis = await holen("/api/gedaechtnis/status"); } catch (e) {}
+  if (aktuelleAnsicht() === "gedaechtnis") route();
+}
+
+// ---------------------------------------------------------------- Web Push (Mitteilungen aufs Handy und die Uhr)
+// Der Service Worker (/sw.js) zeigt nur an, was die Box schickt. Auf dem iPhone geht das erst, wenn
+// QuLSI vom Home-Bildschirm geöffnet wird (iOS 16.4+), und Erlauben braucht einen Fingertipp.
+const push = {stand: null, eigenId: null, pinFuer: null, laeuft: false};
+const pushMoeglich = () => "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+const istIos = () => /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+const alsApp = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+function geraetName() {
+  const ua = navigator.userAgent;
+  const g = /iPhone/.test(ua) ? "iPhone" : /iPad/.test(ua) || (istIos() && !/iPhone/.test(ua)) ? "iPad" : /Android/.test(ua) ? "Android"
+    : /Mac OS X/.test(ua) ? "Mac" : /Windows/.test(ua) ? "Windows" : /Linux/.test(ua) ? "Linux" : "Gerät";
+  const b = /Edg\//.test(ua) ? "Edge" : /Firefox\//.test(ua) ? "Firefox" : /Chrome\//.test(ua) && !/Android/.test(ua) ? "Chrome" : "";
+  return b && !alsApp() ? `${g} (${b})` : g;
+}
+const b64uZuBytes = (s) => Uint8Array.from(atob(s.replace(/-/g, "+").replace(/_/g, "/") + "=".repeat((4 - s.length % 4) % 4)), (c) => c.charCodeAt(0));
+async function aboId(endpoint) {
+  const h = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(endpoint)));
+  return Array.from(h.slice(0, 8), (x) => x.toString(16).padStart(2, "0")).join("");
+}
+async function pushLaden() {
+  try { push.stand = await holen("/api/push"); } catch (e) { push.stand = {fehler: e.message, geraete: []}; }
+  if (location.hash.includes("benachrichtigungen")) route();
+}
+// Beim Start: ist die Erlaubnis schon da, das Abo der Box (wieder) melden. Abos ändern sich manchmal.
+async function pushAbgleichen() {
+  if (!key || !pushMoeglich() || !window.isSecureContext) return pushLaden();
+  try {
+    const reg = await navigator.serviceWorker.register("/sw.js");
+    const abo = Notification.permission === "granted" ? await reg.pushManager.getSubscription() : null;
+    if (abo) {
+      push.eigenId = await aboId(abo.endpoint);
+      await api("/api/push/abo", {json: {abo: abo.toJSON(), geraet: geraetName()}});
+    }
+  } catch (e) {}
+  pushLaden();
+}
+async function pushErlauben(knopf) {
+  knopf.disabled = true;
+  try {
+    // requestPermission muss direkt aus dem Fingertipp kommen (iPhone), deshalb als Erstes.
+    const erlaubt = await Notification.requestPermission();
+    if (erlaubt !== "granted") throw new Error(erlaubt === "denied" ? "Mitteilungen sind für QuLSI aus. Einschalten in den Einstellungen des Handys." : "Nicht erlaubt");
+    const reg = await navigator.serviceWorker.register("/sw.js");
+    await navigator.serviceWorker.ready;
+    const stand = push.stand?.schluessel ? push.stand : await holen("/api/push");
+    let abo = await reg.pushManager.getSubscription();
+    if (abo && abo.options?.applicationServerKey && btoa(String.fromCharCode(...new Uint8Array(abo.options.applicationServerKey))) !==
+        btoa(String.fromCharCode(...b64uZuBytes(stand.schluessel)))) { await abo.unsubscribe(); abo = null; }
+    abo = abo || await reg.pushManager.subscribe({userVisibleOnly: true, applicationServerKey: b64uZuBytes(stand.schluessel)});
+    push.eigenId = await aboId(abo.endpoint);
+    await api("/api/push/abo", {json: {abo: abo.toJSON(), geraet: geraetName()}});
+    await api("/api/push/test", {json: {id: push.eigenId}});
+    melden("Erlaubt. Eine Testnachricht ist unterwegs");
+  } catch (e) { melden(e.message, true); }
+  knopf.disabled = false;
+  pushLaden();
+}
+async function pushAbmelden(id) {
+  try {
+    if (id === push.eigenId) {
+      const abo = await (await navigator.serviceWorker.getRegistration())?.pushManager.getSubscription();
+      if (abo) await abo.unsubscribe();
+      push.eigenId = null;
+    }
+    await api("/api/push/abo/" + id, {method: "DELETE"});
+    melden("Entfernt");
+  } catch (e) { melden(e.message, true); }
+  pushLaden();
+}
+async function pushDetails(id, an, pin = "") {
+  try {
+    await api(`/api/push/abo/${id}/details`, {json: {an, pin}});
+    push.pinFuer = null;
+    melden(an ? "Inhalte werden angezeigt" : "Nur noch Titel");
+  } catch (e) { melden(e.message, true); }
+  pushLaden();
+}
+function pushBereich() {
+  const s = push.stand;
+  const geraete = s?.geraete || [];
+  const eigen = geraete.find((g) => g.id === push.eigenId);
+  let oben;
+  if (!pushMoeglich() && istIos() && !alsApp()) {
+    oben = zeile("Dieses iPhone", "Mitteilungen gehen erst, wenn QuLSI auf dem Home-Bildschirm liegt: in Safari Teilen › Zum Home-Bildschirm, dann QuLSI dort öffnen.", `<span class="chip">Schritt fehlt</span>`);
+  } else if (!pushMoeglich()) {
+    oben = zeile("Dieses Gerät", "Dieser Browser kann keine Mitteilungen empfangen.", `<span class="chip">Nicht möglich</span>`);
+  } else if (!window.isSecureContext) {
+    oben = zeile("Dieses Gerät", "Mitteilungen brauchen eine https-Adresse für QuLSI. Auf RunPod ist das schon so, auf der Box über Tailscale (siehe Anleitung).", `<span class="chip warn">https fehlt</span>`);
+  } else if (Notification.permission === "denied") {
+    oben = zeile("Dieses Gerät", "Mitteilungen für QuLSI sind ausgeschaltet. Einschalten in den Einstellungen des Handys unter Mitteilungen › QuLSI.", `<span class="chip warn">Aus</span>`);
+  } else if (eigen) {
+    oben = zeile("Dieses Gerät", "Bekommt Hinweise und Freigaben, auch auf der gekoppelten Uhr.", `<button class="knopf klein" data-push-test="${esc(eigen.id)}">Test</button>`);
+  } else {
+    oben = `<div class="zeile" style="flex-direction:column;align-items:stretch;gap:12px"><span class="txt"><b>Dieses Gerät</b>
+      <small>Termine, Hinweise und offene Freigaben als Mitteilung. Eine gekoppelte Apple Watch oder Wear-OS-Uhr zeigt sie von selbst.</small></span>
+      <button class="knopf hell" id="push-erlauben">Benachrichtigungen erlauben</button></div>`;
+  }
+  const liste = geraete.map((g) => {
+    const name = esc(g.geraet || g.dienst || "Gerät") + (g.id === push.eigenId ? " · dieses Gerät" : "");
+    const zuletzt = g.zuletzt_ok ? "Zuletzt zugestellt " + new Date(g.zuletzt_ok).toLocaleString("de-DE", {day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit"}) : "Noch nichts zugestellt";
+    const pinForm = push.pinFuer === g.id ? `<form class="reihe" data-push-pin="${esc(g.id)}" style="margin-top:8px;flex-wrap:nowrap">
+        <input class="pin" type="password" inputmode="numeric" pattern="[0-9]*" autocomplete="off" maxlength="12" aria-label="Freigabe-PIN" placeholder="Freigabe-PIN" style="flex:1">
+        <button class="knopf klein">Einschalten</button></form>` : "";
+    return zeile(name, `${zuletzt}${g.fehler ? ` · <span class="warn">${esc(g.fehler)} Fehler</span>` : ""}<br>Inhalte auf dem Sperrbildschirm: ${g.details ? "an" : "aus, nur der Titel"}`,
+      `<span class="reihe" style="gap:6px;flex-wrap:nowrap">
+        <label class="schalter" title="Inhalte auf dem Sperrbildschirm"><input type="checkbox" data-push-details="${esc(g.id)}" ${g.details ? "checked" : ""} aria-label="Inhalte auf dem Sperrbildschirm"><span></span></label>
+        <button class="knopf klein" data-push-weg="${esc(g.id)}" aria-label="Gerät entfernen">Entfernen</button></span>`, pinForm);
+  }).join("");
+  return `<div class="gruppe">${oben}</div>
+    ${geraete.length ? `<h2 class="abschnitt">Geräte mit Mitteilungen</h2><div class="gruppe">${liste}</div>
+      <p class="hinweis">Ohne „Inhalte“ zeigt der Sperrbildschirm nur z. B. „Gleich ein Termin“. Inhalte einschalten geht nur mit der Freigabe-PIN. Freigeben selbst geht immer nur hier in der App.</p>` : ""}`;
+}
+function pushVerdrahten() {
+  $("push-erlauben")?.addEventListener("click", (ev) => pushErlauben(ev.currentTarget));
+  document.querySelectorAll("[data-push-test]").forEach((k) => k.addEventListener("click", async () => {
+    try { const r = await (await api("/api/push/test", {json: {id: k.dataset.pushTest}})).json(); melden(r.gesendet ? "Gesendet" : "Nicht zugestellt", !r.gesendet); }
+    catch (e) { melden(e.message, true); }
+  }));
+  document.querySelectorAll("[data-push-weg]").forEach((k) => k.addEventListener("click", () => pushAbmelden(k.dataset.pushWeg)));
+  document.querySelectorAll("[data-push-details]").forEach((x) => x.addEventListener("change", () => {
+    if (x.checked) { push.pinFuer = x.dataset.pushDetails; route(); } else pushDetails(x.dataset.pushDetails, false);
+  }));
+  document.querySelectorAll("[data-push-pin]").forEach((f) => f.addEventListener("submit", (ev) => {
+    ev.preventDefault();
+    pushDetails(f.dataset.pushPin, true, f.querySelector("input").value);
+  }));
+}
+
+// Warnung aus dem Event Bus: bleibt oben stehen, bis man sie wegklickt.
+function warnungMelden(text) {
+  if ([...document.querySelectorAll("#warnungen-live span")].some((x) => x.textContent === text)) return;
+  let box = $("warnungen-live");
+  if (!box) { box = document.createElement("div"); box.id = "warnungen-live"; document.body.appendChild(box); }
+  const el = document.createElement("div");
+  el.className = "warnung-rot schwebend";
+  el.setAttribute("role", "alert");
+  el.innerHTML = `${ic("sicherheit")}<span></span><button type="button" aria-label="Schließen">×</button>`;
+  el.querySelector("span").textContent = text;
+  el.querySelector("button").onclick = () => el.remove();
+  box.appendChild(el);
+}
+// Event Bus live: neue Ereignisse erscheinen sofort.
+let quelle;
+// EventSource kann keine Header schicken: es nutzt das Sitzungs-Cookie. Bricht die Verbindung ab
+// (z. B. 401 nach einem Neustart der Box), holt live() erst eine neue Sitzung und verbindet neu.
+async function live(neu = false) {
+  if (quelle) quelle.close();
+  if (!key) return;
+  try { await sitzung(neu); }
+  catch (e) { if (e.status !== 401) setTimeout(() => live(true), 30000); return; }
+  quelle = new EventSource("/api/events");
+  quelle.onmessage = (ev) => {
+    let d = null;
+    try { d = JSON.parse(ev.data); } catch (e) {}
+    if (d?.art === "warnung" && d.text) warnungMelden(d.text);
+    aktualisieren();
+    if (location.hash.includes("stimme")) probeLaden();
+  };
+  quelle.onerror = () => { quelle.close(); setTimeout(() => live(true), 10000); };
+}
+
+const BUNDESLAENDER = {BW: "Baden-Württemberg", BY: "Bayern", BE: "Berlin", BB: "Brandenburg", HB: "Bremen", HH: "Hamburg", HE: "Hessen",
+  MV: "Mecklenburg-Vorpommern", NI: "Niedersachsen", NW: "Nordrhein-Westfalen", RP: "Rheinland-Pfalz", SL: "Saarland", SN: "Sachsen",
+  ST: "Sachsen-Anhalt", SH: "Schleswig-Holstein", TH: "Thüringen"};
+async function nutzerLaden() {
+  try { zustand.nutzer = await holen("/api/nutzer"); } catch (e) { zustand.nutzer = zustand.nutzer || {name: null}; }
+  const a = aktuelleAnsicht();
+  if (a === "heute" || (a === "einstellungen" && location.hash.includes("system"))) route();
+  einrichtungPruefen();
+}
+function start() {
+  route.erst = true;
+  route();
+  aktualisieren();
+  connectorenLaden();
+  agentenLaden();
+  einstLaden();
+  gedaechtnisLaden();
+  umgebungLaden();
+  nutzerLaden();
+  probeLaden();
+  pushAbgleichen();
+  live();
+}
+anmelden(false);
+start();
+setInterval(aktualisieren, 60000);
+</script>
+</body>
+</html>

@@ -1,0 +1,73 @@
+# LiteLLM: ein gemeinsamer Eingang für alle Modelle (OpenAI-kompatibel, Port 4000).
+# QuLSI kennt nur diese Namen ("Bonsai ist nicht QuLSI"). Wechselst du ein Modell,
+# änderst du nur diese Datei. Welcher Name wofür genutzt wird: config/router.yaml.
+
+model_list:
+  # Für Sprache und Werkzeuge: Denkmodus aus, sonst wartest du bei 500 Denk-Tokens über 10 Sekunden.
+  - model_name: bonsai-fast
+    litellm_params:
+      model: openai/bonsai
+      api_base: os.environ/BONSAI_URL
+      api_key: lokal
+      temperature: 0.7
+      top_p: 0.8
+      extra_body:
+        top_k: 20
+        chat_template_kwargs: {enable_thinking: false}
+
+  # Für Recherche und Planung: Denkmodus an (Einstellungen laut Modellkarte).
+  - model_name: bonsai-think
+    litellm_params:
+      model: openai/bonsai
+      api_base: os.environ/BONSAI_URL
+      api_key: lokal
+      temperature: 1.0
+      top_p: 0.95
+      extra_body:
+        top_k: 20
+        min_p: 0.05
+        chat_template_kwargs: {enable_thinking: true}
+
+  # Kleines Modell für kurze Befehle ("Schreib Max eine Mail", "Licht aus").
+  - model_name: qulsi-klein
+    litellm_params:
+      model: openai/qulsi-klein
+      api_base: os.environ/KLEIN_URL
+      api_key: lokal
+      temperature: 0.7
+      top_p: 0.8
+      extra_body:
+        top_k: 20
+        chat_template_kwargs: {enable_thinking: false}
+
+  # Bildprüfung (vision.analyze). Gleicher Server, braucht die mmproj-Datei.
+  - model_name: bonsai-vision
+    litellm_params:
+      model: openai/bonsai
+      api_base: os.environ/BONSAI_URL
+      api_key: lokal
+      temperature: 0.2
+      extra_body:
+        chat_template_kwargs: {enable_thinking: false}
+
+  # Textvektoren für das Gedächtnis (1024 Dimensionen, Qdrant-Collections nutzen EMBED_DIM).
+  - model_name: embed
+    litellm_params:
+      model: openai/embed
+      api_base: os.environ/EMBED_URL
+      api_key: lokal
+
+  # Optional: Cloud-Modell für schwere Aufgaben. Nur eintragen, wenn du das bewusst willst,
+  # dann verlassen Prompts das Haus.
+  # - model_name: cloud
+  #   litellm_params:
+  #     model: anthropic/claude-sonnet-5-5
+  #     api_key: os.environ/ANTHROPIC_API_KEY
+
+litellm_settings:
+  drop_params: true
+  telemetry: false
+  request_timeout: 600
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY

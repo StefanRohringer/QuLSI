@@ -1,0 +1,33 @@
+name: mail
+titel: E-Mail
+url: http://connector-mail:8000/mcp
+dienst: connector-mail
+
+capabilities:
+  - email.search
+  - email.read
+  - email.draft
+  - email.send
+
+network:
+  allowed:
+    - ${IMAP_HOST}:993
+    - ${SMTP_HOST}:${SMTP_PORT}
+
+permissions:
+  search: low
+  read: low
+  draft: medium
+  send: high
+
+# Mails sind fremder Text: danach gilt das Gespräch als belastet.
+untrusted: [email.search, email.read]
+# Entwürfe liegen lokal und gehen auch offline.
+offline: [email.draft]
+
+# Was auf dem Handy bei der Freigabe angezeigt wird (internes Werkzeug, nicht fürs Modell).
+vorschau:
+  email.send: email_draft_vorschau
+
+# Passwörter kommen aus dem Tresor, nur für diesen Connector
+secrets: [IMAP_PASSWORD, SMTP_PASSWORD]

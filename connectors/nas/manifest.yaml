@@ -1,0 +1,31 @@
+name: nas
+titel: NAS (Netzwerkspeicher)
+url: http://connector-nas:8000/mcp
+dienst: connector-nas
+
+capabilities:
+  - nas.list
+  - nas.search
+  - nas.read
+  - nas.index
+
+# Nur das eigene NAS im Heimnetz, nur SMB. Leer = nicht eingerichtet, dann darf er nirgends hin.
+network:
+  allowed:
+    - ${NAS_HOST}:445
+
+permissions:
+  list: low
+  search: low
+  read: low
+  index: low
+  write: false
+  delete: false
+
+# Dateinamen und Inhalte können von außen stammen (Downloads, Scans, Mails).
+untrusted: [nas.search, nas.read]
+# Das NAS steht im Heimnetz und geht auch ohne Internet.
+offline: true
+
+secrets: [NAS_PASSWORD]
+limits: {anfragen_pro_minute: 300, mb_pro_minute: 200}

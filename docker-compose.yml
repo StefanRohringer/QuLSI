@@ -1,0 +1,638 @@
+# QuLSI: der komplette Software-Stack der KI-Box.
+#
+#   docker compose up -d                        Kern: Core, Memory, Connectoren, Egress, ntfy
+#   docker compose --profile box up -d          + Bonsai, kleines Modell, Embeddings, Vision, Voice (NVIDIA-GPU)
+#   docker compose --profile webui ...          + Open WebUI (zusätzliche Chat-Oberfläche)
+#   docker compose --profile ha-voice ...       + Wyoming-Dienste für Home-Assistant-Sprachsatelliten
+#   docker compose --profile homeassistant ...  + eigenes Home Assistant (falls noch keins läuft)
+#   docker compose --profile remote ...         + Tailscale als Container (alternativ auf dem Host)
+#
+# Zum Testen ohne GPU: docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+# Alle Einstellungen stehen in .env (Vorlage: .env.example).
+#
+# Sicherheitszonen (Docker-Netze):
+#   zone-ai          Zone 1: Modelle, Vision, Voice. Kein Internet.
+#   zone-agent       Zone 2: Core, Postgres, Qdrant, Werkzeuge. Kein Internet.
+#   zone-connectors  Zone 3: Connectoren. Internet nur über den Egress-Proxy,
+#                    und nur zu den Zielen aus dem jeweiligen Manifest.
+#   edge             veröffentlichte Ports (Web-App, ntfy), ohne Weg nach draußen
+#   internet         nur egress, searxng, ntfy
+#   lan              nur mit docker-compose.kameras.yml: Vision zu den Kameras (scripts/firewall.sh)
+#
+# Härtung (x-hart): eigene Dienste laufen als Nutzer 10001 statt root, mit schreibgeschütztem
+# Dateisystem, ohne Linux-Capabilities, mit no-new-privileges und Dockers Seccomp-Standardprofil.
+# Fremde Images (Postgres, Qdrant, ntfy, ...) bekommen nur die Capabilities, die sie brauchen.
+# Vor dem ersten Start einmal:  sudo install -d -o 10001 -g 10001 data/objects data/memchip models data/egress
+#                                sudo install -d -m 700 -o 10001 -g 10001 data/tresor
+
+x-db: &db postgresql://qulsi:${POSTGRES_PASSWORD}@postgres:5432/qulsi
+x-restart: &restart unless-stopped
+x-gpu: &gpu
+  deploy:
+    resources:
+      reservations:
+        devices:
+          - driver: nvidia
+            count: all
+            capabilities: [gpu]
+x-hart: &hart
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+  tmpfs: ["/tmp:size=256m"]
+# Für fremde Images, die beim Start als root Rechte anpassen und dann den Nutzer wechseln
+x-hart-start: &hart_start
+  cap_drop: [ALL]
+  cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETUID]
+  security_opt: ["no-new-privileges:true"]
+# Jeder Connector: eigener Container, gehärtet, mit Ressourcen-Limits (pro Dienst überschreibbar)
+x-connector: &connector
+  <<: *hart
+  mem_limit: 512m
+  cpus: 1.0
+  pids_limit: 256
+  build: connectors
+  image: qulsi-connectors
+  restart: *restart
+  networks: [zone-agent, zone-connectors]
+  depends_on:
+    postgres: {condition: service_healthy}
+    egress: {condition: service_started}
+    tresor: {condition: service_started}
+x-connector-env: &connector_env
+  HTTPS_PROXY: http://egress:3128
+  HTTP_PROXY: http://egress:3128
+  https_proxy: http://egress:3128
+  http_proxy: http://egress:3128
+  NO_PROXY: localhost,127.0.0.1,litellm,qdrant,vision,searxng,postgres,tresor
+  no_proxy: localhost,127.0.0.1,litellm,qdrant,vision,searxng,postgres,tresor
+  # Passwörter und Tokens kommen nur aus dem Tresor (nicht aus der .env)
+  TRESOR_URL: http://tresor:8400
+  MCP_ALLOWED_HOSTS: "connector-home-assistant:*,connector-calendar:*,connector-mail:*,connector-files:*,connector-web:*,connector-vision:*,connector-google:*,connector-microsoft:*,connector-nas:*,connector-browser:*,localhost:*"
+  TZ: ${TZ:-Europe/Berlin}
+
+networks:
+  zone-ai: {internal: true}
+  zone-agent: {internal: true}
+  zone-connectors: {internal: true}
+  edge:
+    driver_opts:
+      com.docker.network.bridge.enable_ip_masquerade: "false"
+  internet: {}
+  lan: {}
+
+services:
+  # ================================================================ Zone 2: Memory
+  postgres:
+    image: postgres:16
+    restart: *restart
+    <<: *hart_start
+    shm_size: 256m
+    networks: [zone-agent]
+    environment:
+      POSTGRES_USER: qulsi
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: qulsi
+      DB_PW_VISION: ${DB_PW_VISION}
+      DB_PW_CALENDAR: ${DB_PW_CALENDAR}
+      DB_PW_MAIL: ${DB_PW_MAIL}
+      DB_PW_FILES: ${DB_PW_FILES}
+      DB_PW_GOOGLE: ${DB_PW_GOOGLE:-}
+      DB_PW_MICROSOFT: ${DB_PW_MICROSOFT:-}
+      DB_PW_NAS: ${DB_PW_NAS:-}
+      TZ: ${TZ:-Europe/Berlin}
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U qulsi -d qulsi"]
+      interval: 5s
+      retries: 20
+
+  qdrant:
+    image: qdrant/qdrant:${QDRANT_TAG:-v1.19.2}
+    restart: *restart
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    networks: [zone-agent]
+    environment:
+      QDRANT__TELEMETRY_DISABLED: "true"
+    volumes:
+      - ./data/qdrant:/qdrant/storage
+
+  # ================================================================ Zone 1: Modelle
+  llm:
+    profiles: [box]
+    build: {context: runtime/llm, args: {BACKEND: cuda}}
+    image: qulsi-llm
+    restart: *restart
+    <<: [*hart, *gpu]
+    networks: [zone-ai]
+    environment:
+      LLM_ROLLE: bonsai
+      LLM_PORT: 8080
+      BONSAI_FILE: ${BONSAI_FILE:-Ternary-Bonsai-2-27B-PQ2_0.gguf}
+      BONSAI_MMPROJ: ${BONSAI_MMPROJ:-}
+      BONSAI_CTX: ${BONSAI_CTX:-49152}
+      BONSAI_KV: ${BONSAI_KV:-q4_0}
+      BONSAI_PARALLEL: ${BONSAI_PARALLEL:-2}
+    volumes:
+      - ./models:/models:ro
+
+  klein:
+    profiles: [box]
+    image: qulsi-llm
+    restart: *restart
+    <<: [*hart, *gpu]
+    networks: [zone-ai]
+    depends_on: [llm]
+    environment:
+      LLM_ROLLE: klein
+      LLM_PORT: 8082
+      KLEIN_FILE: ${KLEIN_FILE:-Qwen3-1.7B-Q8_0.gguf}
+      KLEIN_GPU_LAYERS: ${KLEIN_GPU_LAYERS:-0}   # Standard CPU: Platz für die Sprachausgabe
+      KLEIN_SCHLAF_SEKUNDEN: ${KLEIN_SCHLAF_SEKUNDEN:-600}
+    volumes:
+      - ./models:/models:ro
+
+  embed:
+    profiles: [box]
+    image: qulsi-llm
+    restart: *restart
+    <<: [*hart, *gpu]
+    networks: [zone-ai]
+    depends_on: [llm]
+    environment:
+      LLM_ROLLE: embed
+      LLM_PORT: 8081
+      EMBED_FILE: ${EMBED_FILE:-Qwen3-Embedding-0.6B-Q8_0.gguf}
+      EMBED_SCHLAF_SEKUNDEN: ${EMBED_SCHLAF_SEKUNDEN:-600}
+    volumes:
+      - ./models:/models:ro
+
+  litellm:
+    image: litellm/litellm:${LITELLM_TAG:-main-stable}
+    restart: *restart
+    <<: *hart
+    networks: [zone-ai, zone-agent]
+    command: ["--config", "/config/litellm.yaml", "--port", "4000"]
+    environment:
+      BONSAI_URL: ${BONSAI_URL:-http://llm:8080/v1}
+      KLEIN_URL: ${KLEIN_URL:-http://klein:8082/v1}
+      EMBED_URL: ${EMBED_URL:-http://embed:8081/v1}
+      LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+    volumes:
+      - ./config/litellm.yaml:/config/litellm.yaml:ro
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:4000/health/liveliness')"]
+      interval: 5s
+      retries: 30
+
+  vision:
+    profiles: [box]
+    build: vision
+    image: qulsi-vision
+    restart: *restart
+    <<: [*hart, *gpu]
+    networks: [zone-ai, zone-agent, edge]   # edge nur für den Anlern-Port; Kameras: docker-compose.kameras.yml
+    depends_on:
+      postgres: {condition: service_healthy}
+    environment:
+      DATABASE_URL: postgresql://qulsi_vision:${DB_PW_VISION}@postgres:5432/qulsi
+      QDRANT_URL: http://qdrant:6333
+      LLM_BASE_URL: http://litellm:4000/v1
+      LLM_API_KEY: ${LITELLM_MASTER_KEY}
+      DETECTOR: ${DETECTOR:-owlv2}
+      EMBEDDER: ${EMBEDDER:-siglip}
+      DEVICE: cuda
+      # Zone 1: kein Internet. Modelle vorher laden: docker compose --profile setup run --rm vision-modelle
+      HF_HUB_OFFLINE: "1"
+      TRANSFORMERS_OFFLINE: "1"
+      YOLO_OFFLINE: "true"
+      HOME: /models/home
+      MQTT_HOST: mosquitto
+      # Live-Kameras sind aus; Vision arbeitet mit hochgeladenen Fotos. Einschalten: docker-compose.kameras.yml
+      DAUERBETRIEB: "false"
+      MODELL_LEERLAUF_SEKUNDEN: ${MODELL_LEERLAUF_SEKUNDEN:-600}
+      KAMERA_KUECHE_URL: ${KAMERA_KUECHE_URL:-}
+      KAMERA_FLUR_URL: ${KAMERA_FLUR_URL:-}
+      KAMERA_WOHNZIMMER_URL: ${KAMERA_WOHNZIMMER_URL:-}
+      CROP_RETENTION_DAYS: ${CROP_RETENTION_DAYS:-14}
+      TZ: ${TZ:-Europe/Berlin}
+    volumes:
+      - ./config/cameras.yaml:/config/cameras.yaml:ro
+      - ./data/objects:/data/objects
+      - ./models:/models
+    ports:
+      - "127.0.0.1:8200:8200"     # Anlernen per scripts/anlernen.sh
+
+  # Einmalig: lädt YOLO-World, CLIP und SigLIP nach ./models (einziger Vision-Container mit Internet)
+  vision-modelle:
+    profiles: [setup]
+    image: qulsi-vision
+    <<: *hart
+    networks: [internet]
+    command: ["python", "-m", "qulsi_vision.vorladen"]
+    environment:
+      DETECTOR: ${DETECTOR:-owlv2}
+      EMBEDDER: ${EMBEDDER:-siglip}
+      DEVICE: cpu
+      HOME: /models/home
+    volumes:
+      - ./config/cameras.yaml:/config/cameras.yaml:ro
+      - ./models:/models
+
+  voice:
+    profiles: [box]
+    build: voice
+    image: qulsi-voice
+    restart: *restart
+    <<: [*hart, *gpu]
+    networks: [zone-ai]
+    environment:
+      STT_PROVIDER: ${STT_PROVIDER:-whisper}
+      STT_MODEL: ${STT_MODEL:-large-v3-turbo}
+      STT_DEVICE: ${STT_DEVICE:-cuda}
+      # Sprachausgabe über den TTS-Dienst (CosyVoice 3, Qwen3-TTS oder Chatterbox), Piper als Ersatz
+      TTS_PROVIDER: ${TTS_PROVIDER:-openai}
+      TTS_URL: ${TTS_URL:-http://tts:8400/v1}
+      TTS_MODEL: ${TTS_MODELL:-qwen3-tts}
+      TTS_SPRECHER: ${TTS_SPRECHER:-}
+      TTS_ERSATZ: ${TTS_ERSATZ:-piper}
+      TTS_VOICE: ${TTS_VOICE:-de_DE-thorsten-high}
+      STT_LEERLAUF_SEKUNDEN: ${STT_LEERLAUF_SEKUNDEN:-600}
+      HF_HUB_OFFLINE: "1"
+    volumes:
+      - ./models/voice:/models/voice:ro
+
+  tts:
+    profiles: [box]
+    build: {context: tts, args: {MODELL: "${TTS_MODELL:-qwen3-tts}"}}
+    image: qulsi-tts-${TTS_MODELL:-qwen3-tts}
+    restart: *restart
+    <<: [*hart, *gpu]
+    networks: [zone-ai]
+    environment:
+      TTS_SPRECHER: ${TTS_SPRECHER:-}
+      TTS_LEERLAUF_SEKUNDEN: ${TTS_LEERLAUF_SEKUNDEN:-600}
+      HF_HUB_OFFLINE: "1"
+      TRANSFORMERS_OFFLINE: "1"
+      HOME: /tmp
+    volumes:
+      - ./models/tts:/models/tts:ro
+      - ./config/stimme:/stimme:ro   # eigene Stimme: stimme.wav + stimme.txt
+
+  # Lädt die Dateien des TTS-Modells einmalig (einziger Weg ins Internet für Zone 1)
+  tts-modell:
+    profiles: [setup]
+    image: qulsi-tts-${TTS_MODELL:-qwen3-tts}
+    <<: *hart
+    networks: [internet]
+    command: ["laden"]
+    environment:
+      HOME: /tmp
+    volumes:
+      - ./models/tts:/models/tts
+
+  # ================================================================ Zone 2: QuLSI Core
+  core:
+    build: core
+    image: qulsi-core
+    restart: *restart
+    <<: *hart
+    networks: [zone-agent, zone-ai, edge]
+    depends_on:
+      postgres: {condition: service_healthy}
+      litellm: {condition: service_healthy}
+      qdrant: {condition: service_started}
+      egress: {condition: service_started}
+    environment:
+      DATABASE_URL: *db
+      QDRANT_URL: http://qdrant:6333
+      LLM_BASE_URL: http://litellm:4000/v1
+      LLM_API_KEY: ${LITELLM_MASTER_KEY}
+      VOICE_URL: http://voice:8300
+      EGRESS_URL: http://egress:3128
+      QULSI_OFFLINE: ${QULSI_OFFLINE:-auto}
+      QULSI_API_KEY: ${QULSI_API_KEY}
+      QULSI_BUNDESLAND: ${QULSI_BUNDESLAND:-}
+      QULSI_NUTZER: ${QULSI_NUTZER:-}
+      # Bilder an Bonsai nur mit Bildteil (mmproj), sonst sagt QuLSI das ehrlich
+      QULSI_BILDER: ${BONSAI_MMPROJ:+an}
+      QULSI_TRESOR_APP: ${QULSI_TRESOR_APP:-an}
+      QULSI_TRESOR_NETZE: ${QULSI_TRESOR_NETZE:-}
+      QULSI_FREIGABE_PIN: ${QULSI_FREIGABE_PIN:-}
+      # Konten und Zugangsdaten aus der App: nach der Freigabe schreibt der Core in den Tresor (nie lesen)
+      TRESOR_URL: http://tresor:8400
+      TTS_DIENST_URL: http://tts:8400
+      PUBLIC_URL: ${PUBLIC_URL}
+      NTFY_URL: http://ntfy
+      NTFY_TOPIC: ${NTFY_TOPIC:-qulsi}
+      NTFY_TOKEN: ${NTFY_TOKEN:-}
+      MODEL_SMALL: ${MODEL_SMALL:-}
+      CONNECTORS_DIR: /connectors
+      QULSI_SIGNATUR_PUB: /qulsi-config/signatur.pub
+      OBJECT_STORE_DIR: /data/objects
+      TZ: ${TZ:-Europe/Berlin}
+      # Gedächtnis: Organisator, Fotos, Memchip (siehe README "Gedächtnis")
+      ORGANISATOR_MINUTEN: ${ORGANISATOR_MINUTEN:-10}
+      FOTOS_DIR: /data/fotos
+      # Hochladen aus der App: nur die Unterordner „Hochgeladen“ sind schreibend eingebunden
+      HOCHLADEN_FOTOS_DIR: /data/hochgeladen/fotos
+      HOCHLADEN_DATEIEN_DIR: /data/hochgeladen/dateien
+      HOCHLADEN_MAX_MB: ${HOCHLADEN_MAX_MB:-25}
+      MEMCHIP_DIR: /data/memchip
+      MEMCHIP_PASSWORT: ${MEMCHIP_PASSWORT:-}
+      MEMCHIP_UNVERSCHLUESSELT: ${MEMCHIP_UNVERSCHLUESSELT:-0}
+      MEMCHIP_AUTO_STUNDEN: ${MEMCHIP_AUTO_STUNDEN:-0}
+    volumes:
+      - ./config/policy.yaml:/config/policy.yaml:ro
+      - ./config/router.yaml:/config/router.yaml:ro
+      - ./config/agent_prompt.md:/config/agent_prompt.md:ro
+      - ./config/agenten.yaml:/config/agenten.yaml:ro
+      - ./config/cameras.yaml:/config/cameras.yaml:ro
+      - ./connectors:/connectors:ro
+      - ./config:/qulsi-config:ro
+      - ./data/objects:/data/objects          # schreibend: Foto-Vorschauen, Memchip-Import
+      - ./config/stimme:/stimme               # schreibend: Stimmprobe aus der App, erst nach Freigabe aktiv
+      - ${FOTOS_DIR:-./data/fotos}:/data/fotos:ro
+      - ${FOTOS_DIR:-./data/fotos}/Hochgeladen:/data/hochgeladen/fotos       # schreibend: Fotos aus der App
+      - ${FILES_DIR:-./data/files}/Hochgeladen:/data/hochgeladen/dateien     # schreibend: Dateien aus der App
+      - ${MEMCHIP_DIR:-./data/memchip}:/data/memchip
+    ports:
+      - "${BIND_IP:-0.0.0.0}:${QULSI_PORT:-80}:8100"   # Web-App http://qulsi.local, Handy, Home Assistant
+
+  # ================================================================ Zone 3: Connectoren
+  egress:
+    build: egress
+    image: qulsi-egress
+    restart: *restart
+    <<: *hart
+    networks: [zone-agent, zone-connectors, internet]
+    environment:
+      # QuLSI selbst ist für Connectoren tabu (eigene App und API nicht von außen abklopfen)
+      PUBLIC_URL: ${PUBLIC_URL:-}
+      NTFY_PUBLIC_URL: ${NTFY_PUBLIC_URL:-}
+      QULSI_EIGENE_HOSTS: ${QULSI_EIGENE_HOSTS:-}
+      CONNECTORS_DIR: /connectors
+      PROTOKOLL_DIR: /data/egress
+      QULSI_SIGNATUR_PUB: /qulsi-config/signatur.pub
+      QULSI_PROBE: ${QULSI_PROBE:-1.1.1.1:443,9.9.9.9:443}
+      QULSI_EGRESS_EXTRA: ${QULSI_EGRESS_EXTRA:-}
+      TZ: ${TZ:-Europe/Berlin}
+      # Nur die Ziele, keine Passwörter: daraus baut der Proxy die erlaubten Hosts
+      HA_URL: ${HA_URL:-http://host.docker.internal:8123}
+      CALENDAR_ICS_URLS: ${CALENDAR_ICS_URLS:-}
+      IMAP_HOST: ${IMAP_HOST:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      NAS_HOST: ${NAS_HOST:-}
+      BROWSER_ALLOWED_DOMAINS: ${BROWSER_ALLOWED_DOMAINS:-*}
+    volumes:
+      - ./connectors:/connectors:ro
+      - ./config:/qulsi-config:ro
+      - ./data/egress:/data/egress     # Protokoll aller Verbindungen, Quarantäne
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # Tresor: Passwörter, API-Schlüssel und OAuth-Tokens, age-verschlüsselt (siehe tresor/qulsi_tresor.py)
+  #   docker compose run --rm tresor setzen IMAP_PASSWORD
+  tresor:
+    build: tresor
+    image: qulsi-tresor
+    restart: *restart
+    <<: *hart
+    mem_limit: 256m
+    # zone-agent nur für den Core: /verwaltung (Zugangsdaten aus der App setzen) nimmt nur Anfragen vom Core an
+    networks: [zone-connectors, zone-agent]
+    environment:
+      CONNECTORS_DIR: /connectors
+      DATA_DIR: /data
+      HTTPS_PROXY: http://egress:3128     # nur für das Erneuern von OAuth-Tokens
+      https_proxy: http://egress:3128
+      NO_PROXY: localhost,127.0.0.1
+      no_proxy: localhost,127.0.0.1
+      MS_TENANT: ${MS_TENANT:-common}
+      # Client-IDs für die Anmeldung aus der App (können auch in der App im Tresor gesetzt werden)
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      MS_CLIENT_ID: ${MS_CLIENT_ID:-}
+      TZ: ${TZ:-Europe/Berlin}
+    volumes:
+      - ./connectors:/connectors:ro
+      - ./data/tresor:/data
+
+  connector-home-assistant:
+    <<: *connector
+    command: ["python", "home_assistant/server.py"]
+    environment:
+      <<: *connector_env
+      HA_URL: ${HA_URL:-http://host.docker.internal:8123}
+
+  connector-calendar:
+    <<: *connector
+    command: ["python", "calendar/server.py"]
+    environment:
+      <<: *connector_env
+      DATABASE_URL: postgresql://qulsi_calendar:${DB_PW_CALENDAR}@postgres:5432/qulsi
+      CALENDAR_ICS_URLS: ${CALENDAR_ICS_URLS:-}
+      CALENDAR_SYNC_MINUTES: ${CALENDAR_SYNC_MINUTES:-15}
+      CALENDAR_EIGENE_ADRESSEN: ${CALENDAR_EIGENE_ADRESSEN:-${MAIL_FROM:-}}
+
+  connector-mail:
+    <<: *connector
+    command: ["python", "mail/server.py"]
+    environment:
+      <<: *connector_env
+      DATABASE_URL: postgresql://qulsi_mail:${DB_PW_MAIL}@postgres:5432/qulsi
+      IMAP_HOST: ${IMAP_HOST:-}
+      IMAP_USER: ${IMAP_USER:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_STARTTLS: ${SMTP_STARTTLS:-true}
+      MAIL_FROM: ${MAIL_FROM:-}
+
+  connector-files:
+    <<: *connector
+    command: ["python", "files/server.py"]
+    environment:
+      <<: *connector_env
+      DATABASE_URL: postgresql://qulsi_files:${DB_PW_FILES}@postgres:5432/qulsi
+      QDRANT_URL: http://qdrant:6333
+      LLM_BASE_URL: http://litellm:4000/v1
+      LLM_API_KEY: ${LITELLM_MASTER_KEY}
+      FILES_DIR: /data/files
+      OBJECT_STORE_DIR: /data/objects
+    volumes:
+      - ${FILES_DIR:-./data/files}:/data/files:ro
+      - ./data/objects:/data/objects
+
+  connector-web:
+    <<: *connector
+    command: ["python", "web/server.py"]
+    environment:
+      <<: *connector_env
+      SEARXNG_URL: http://searxng:8080
+
+  connector-vision:
+    <<: *connector
+    command: ["python", "vision/server.py"]
+    environment:
+      <<: *connector_env
+      VISION_URL: http://vision:8200
+  # Konten: Anmeldung einmalig mit "docker compose exec connector-google python google/server.py anmelden"
+  connector-google:
+    <<: *connector
+    command: ["python", "google/server.py"]
+    environment:
+      <<: *connector_env
+      DATABASE_URL: postgresql://qulsi_google:${DB_PW_GOOGLE:-}@postgres:5432/qulsi
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CALENDARS: ${GOOGLE_CALENDARS:-}
+      GOOGLE_SYNC_MINUTES: ${GOOGLE_SYNC_MINUTES:-15}
+
+  connector-microsoft:
+    <<: *connector
+    command: ["python", "microsoft/server.py"]
+    environment:
+      <<: *connector_env
+      DATABASE_URL: postgresql://qulsi_microsoft:${DB_PW_MICROSOFT:-}@postgres:5432/qulsi
+      MS_CLIENT_ID: ${MS_CLIENT_ID:-}
+      MS_TENANT: ${MS_TENANT:-common}
+      MS_SYNC_MINUTES: ${MS_SYNC_MINUTES:-15}
+
+  connector-nas:
+    <<: *connector
+    command: ["python", "nas/server.py"]
+    environment:
+      <<: *connector_env
+      DATABASE_URL: postgresql://qulsi_nas:${DB_PW_NAS:-}@postgres:5432/qulsi
+      QDRANT_URL: http://qdrant:6333
+      LLM_BASE_URL: http://litellm:4000/v1
+      LLM_API_KEY: ${LITELLM_MASTER_KEY}
+      NAS_HOST: ${NAS_HOST:-}
+      NAS_SHARE: ${NAS_SHARE:-}
+      NAS_USER: ${NAS_USER:-}
+      NAS_INDEX_ORDNER: ${NAS_INDEX_ORDNER:-}
+      NAS_INDEX_MINUTES: ${NAS_INDEX_MINUTES:-60}
+      OBJECT_STORE_DIR: /data/objects
+    volumes:
+      - ./data/objects:/data/objects
+
+  connector-browser:
+    <<: *connector
+    command: ["python", "browser/server.py"]
+    environment:
+      <<: *connector_env
+
+
+  searxng:
+    image: searxng/searxng:latest
+    restart: *restart
+    <<: *hart_start
+    networks: [zone-connectors, internet]
+    environment:
+      SEARXNG_SECRET: ${SEARXNG_SECRET}
+      GRANIAN_HOST: 0.0.0.0   # Standard wäre IPv6 (::), das scheitert auf Hosts ohne IPv6
+    volumes:
+      - ./config/searxng/settings.yml:/etc/searxng/settings.yml:ro
+
+  # ================================================================ Bedienung und Hilfsdienste
+  ntfy:
+    image: binwiederhier/ntfy:latest
+    restart: *restart
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    networks: [edge, internet]
+    command: ["serve"]
+    environment:
+      NTFY_BASE_URL: ${NTFY_PUBLIC_URL:-http://localhost:8090}
+      NTFY_CACHE_FILE: /var/lib/ntfy/cache.db
+      NTFY_AUTH_FILE: /var/lib/ntfy/auth.db
+      NTFY_AUTH_DEFAULT_ACCESS: deny-all
+      NTFY_BEHIND_PROXY: "true"
+      TZ: ${TZ:-Europe/Berlin}
+    volumes:
+      - ./data/ntfy:/var/lib/ntfy
+    ports:
+      - "${BIND_IP:-0.0.0.0}:8090:80"
+
+  mosquitto:
+    image: eclipse-mosquitto:2
+    restart: *restart
+    <<: *hart_start
+    networks: [zone-agent, edge]
+    volumes:
+      - ./config/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+    ports:
+      - "${BIND_IP:-0.0.0.0}:1883:1883"   # ESPresense-Empfänger im WLAN
+
+  open-webui:
+    profiles: [webui]
+    image: ghcr.io/open-webui/open-webui:main
+    restart: *restart
+    networks: [zone-agent, internet]
+    environment:
+      OPENAI_API_BASE_URLS: http://core:8100/v1
+      OPENAI_API_KEYS: ${QULSI_API_KEY}
+      ENABLE_OLLAMA_API: "false"
+      WEBUI_SECRET_KEY: ${WEBUI_SECRET_KEY}
+      ANONYMIZED_TELEMETRY: "false"
+    volumes:
+      - ./data/open-webui:/app/backend/data
+    ports:
+      - "${BIND_IP:-0.0.0.0}:3000:8080"
+
+  # Wyoming-Dienste für Home-Assistant-Sprachsatelliten ("Hey QuLSI" per eigenem Wake-Word-Modell)
+  whisper:
+    profiles: [ha-voice]
+    image: lscr.io/linuxserver/faster-whisper:gpu
+    restart: *restart
+    <<: *gpu
+    networks: [edge]
+    environment: {WHISPER_MODEL: turbo, WHISPER_LANG: de, TZ: "${TZ:-Europe/Berlin}"}
+    volumes: [./data/whisper:/config]
+    ports: ["127.0.0.1:10300:10300"]
+
+  piper:
+    profiles: [ha-voice]
+    image: lscr.io/linuxserver/piper:latest
+    restart: *restart
+    networks: [edge]
+    environment: {PIPER_VOICE: "${TTS_VOICE:-de_DE-thorsten-high}", TZ: "${TZ:-Europe/Berlin}"}
+    volumes: [./data/piper:/config]
+    ports: ["127.0.0.1:10200:10200"]
+
+  openwakeword:
+    profiles: [ha-voice]
+    image: rhasspy/wyoming-openwakeword:latest
+    restart: *restart
+    networks: [edge]
+    command: ["--preload-model", "${WAKEWORD:-ok_nabu}", "--custom-model-dir", "/custom"]
+    volumes: [./data/wakeword:/custom]
+    ports: ["127.0.0.1:10400:10400"]
+
+  homeassistant:
+    profiles: [homeassistant]
+    image: ghcr.io/home-assistant/home-assistant:stable
+    restart: *restart
+    network_mode: host
+    environment:
+      TZ: ${TZ:-Europe/Berlin}
+    volumes:
+      - ./data/homeassistant:/config
+
+  tailscale:
+    profiles: [remote]
+    image: tailscale/tailscale:latest
+    restart: *restart
+    network_mode: host
+    cap_add: [NET_ADMIN, NET_RAW]
+    devices: [/dev/net/tun]
+    environment:
+      TS_AUTHKEY: ${TS_AUTHKEY:-}
+      TS_STATE_DIR: /var/lib/tailscale
+      TS_HOSTNAME: ${TS_HOSTNAME:-qulsi}
+    volumes:
+      - ./data/tailscale:/var/lib/tailscale

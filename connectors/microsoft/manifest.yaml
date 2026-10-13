@@ -1,0 +1,50 @@
+name: microsoft
+titel: Microsoft (Outlook, Kalender, OneDrive)
+url: http://connector-microsoft:8000/mcp
+dienst: connector-microsoft
+
+capabilities:
+  - microsoft.calendar.sync
+  - microsoft.calendar.create
+  - microsoft.mail.search
+  - microsoft.mail.read
+  - microsoft.mail.draft
+  - microsoft.mail.send
+  - microsoft.onedrive.search
+  - microsoft.onedrive.read
+
+# Anmeldung und Graph-API. Dateiinhalte liefert OneDrive über eigene Download-Server.
+network:
+  allowed_domains: [login.microsoftonline.com, graph.microsoft.com, "*.1drv.com", "*.sharepoint.com", "*.svc.ms"]
+  allowed_ports: [443]
+
+permissions:
+  calendar.sync: low
+  calendar.create: medium
+  mail.search: low
+  mail.read: low
+  mail.draft: medium
+  mail.send: high
+  onedrive.search: low
+  onedrive.read: low
+  mail.delete: false
+  onedrive.write: false
+  onedrive.delete: false
+  calendar.delete: false
+
+untrusted: [microsoft.mail.search, microsoft.mail.read, microsoft.onedrive.search, microsoft.onedrive.read]
+offline: false
+
+vorschau:
+  microsoft.mail.send: microsoft_mail_vorschau
+
+# Refresh-Token bleibt im Tresor, der Connector bekommt kurzlebige Tokens
+konto:
+  token_url: https://login.microsoftonline.com/${MS_TENANT}/oauth2/v2.0/token
+  client_id: MS_CLIENT_ID              # .env oder Tresor (in der App unter Konten einstellbar)
+  # Anmelden in der App: Code auf microsoft.com/devicelogin eingeben (Gerätecode)
+  anmeldung: geraetecode
+  geraetecode_url: https://login.microsoftonline.com/${MS_TENANT}/oauth2/v2.0/devicecode
+  scopes: offline_access User.Read Mail.ReadWrite Mail.Send Calendars.ReadWrite Files.Read
+
+limits: {anfragen_pro_minute: 120, mb_pro_minute: 50}

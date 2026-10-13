@@ -1,0 +1,80 @@
+# Hintergrund-Agents: QuLSI arbeitet von selbst, ohne dass du fragst.
+#
+# Jeder Agent läuft nach Zeitplan und/oder bei Ereignissen im Event Bus und nutzt nur
+# die Werkzeuge, die hier stehen. Alles geht durch die Policy Engine (kanal "automatik"):
+#   low     frei (lesen)
+#   medium  nur frei, wenn die Fähigkeit unter "selbststaendig" steht, sonst Freigabe auf dem Handy
+#   high    immer Freigabe auf dem Handy (Mail senden, Tür öffnen, ...)
+# Hat ein Agent fremden Text gelesen (Mails, Web, Dateien), gilt wie im Chat:
+# medium nur mit Freigabe, high gesperrt. "selbststaendig" hilft dann nicht.
+#
+# Zeitpläne: "alle 15 min", "alle 2 std", "stündlich", "täglich 07:00", "werktags 07:30",
+#            "wochenende 09:00", "mo,mi,fr 18:00"
+# Typen:     llm (Auftrag an das Sprachmodell), termine, aufgaben, mails, hinweis
+# Ein Agent ohne Zeitplan und ohne Ereignisse läuft nur, wenn du ihn startest
+# (App oder POST /api/agenten/<name>/starten).
+#
+# Ausschalten: "aktiv: false" hier, in der App, oder alle mit QULSI_AGENTEN=aus.
+
+einstellungen:
+  ruhezeit: "22:00-07:00"       # Agents ohne "nachts: true" laufen dann nicht nach Zeitplan und
+                                # schicken nichts aufs Handy (Timeline bekommt es trotzdem)
+  max_hinweise_pro_stunde: 6    # mehr landen nur in der Timeline
+  nachholen_stunden: 2          # verpasster Tageslauf (Box war aus) wird bis dahin nachgeholt
+  zeitlimit_sekunden: 300
+
+agenten:
+  morgenbriefing:
+    titel: Morgenbriefing
+    typ: llm
+    zeitplan: "täglich 07:00"
+    modell: standard
+    werkzeuge: [calendar.search, tasks.list, email.search, memory.search, objects.where]
+    auftrag: |
+      Erstelle das Morgenbriefing für heute. Hol dir die Termine von heute,
+      die offenen Aufgaben und die ungelesenen Mails der letzten Nacht.
+      Schreib höchstens sechs kurze Zeilen: zuerst was zeitlich drängt, dann Aufgaben,
+      dann wichtige Mails (nur Absender und Betreff). Keine Begrüßungsfloskeln.
+
+  termin_erinnerung:
+    titel: Gleich ein Termin
+    typ: termine
+    zeitplan: "alle 5 min"
+    vorlauf_minuten: 30
+    nachts: true
+
+  aufgaben_faellig:
+    titel: Fällige Aufgaben
+    typ: aufgaben
+    zeitplan: "werktags 08:00"
+
+  mail_waechter:
+    titel: Neue Mails
+    typ: mails
+    zeitplan: "alle 15 min"
+    modell: standard
+    werkzeuge: [persons.search, memory.search, calendar.search, tasks.create, calendar.create, email.draft]
+    auftrag: |
+      Prüfe die neuen Mails. Melde nur, was dein Nutzer wirklich wissen muss
+      (Fristen, Termine, Antworten, auf die jemand wartet, Rechnungen). Werbung und
+      Newsletter ignorieren. Steht eine Aufgabe oder ein Termin drin, lege sie mit
+      tasks_create bzw. calendar_create an; dein Nutzer bestätigt das auf dem Handy.
+      Gibt es nichts Wichtiges, antworte genau: NICHTS
+
+  tagesrueckblick:
+    titel: Tagesrückblick
+    typ: llm
+    zeitplan: "täglich 21:30"
+    modell: standard
+    benachrichtigen: false
+    werkzeuge: [memory.timeline, tasks.list, calendar.search]
+    auftrag: |
+      Schau dir die Timeline von heute, die heutigen Termine und die erledigten Aufgaben an.
+      Fasse den Tag in zwei bis vier Sätzen zusammen, nur was wirklich passiert ist, und
+      antworte mit der Zusammenfassung. Speichere nichts: der Rückblick steht so schon in der
+      Timeline, das Gedächtnis legt den Tag selbst ab.
+
+  offline_hinweis:
+    titel: Internet
+    typ: hinweis
+    ereignisse: [offline, online]

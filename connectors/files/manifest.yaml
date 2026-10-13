@@ -1,0 +1,21 @@
+name: files
+titel: Dateien
+url: http://connector-files:8000/mcp
+dienst: connector-files
+
+capabilities:
+  - files.search
+  - files.read
+  - files.index
+
+network:
+  allowed: []        # lokale Dateien, kein Internet
+
+permissions:
+  search: low
+  read: low
+  index: low
+
+# Dateiinhalt kann von außen stammen (Rechnungen, Downloads): gilt als fremder Text.
+untrusted: [files.search, files.read]
+offline: true

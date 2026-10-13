@@ -1,0 +1,9 @@
+# Minimal-Konfiguration für SearXNG: JSON-Ausgabe für das Werkzeug web_search.
+use_default_settings: true
+server:
+  secret_key: "wird-durch-SEARXNG_SECRET-ersetzt"
+  limiter: false
+  image_proxy: false
+search:
+  formats: [html, json]
+  default_lang: de

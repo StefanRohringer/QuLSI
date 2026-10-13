@@ -1,0 +1,18 @@
+name: web
+titel: Websuche
+url: http://connector-web:8000/mcp
+dienst: connector-web
+
+capabilities:
+  - browser.search
+
+# Der Connector selbst spricht nur mit der eigenen SearXNG-Instanz. SearXNG fragt die
+# Suchmaschinen an und ist der einzige Dienst außer dem Egress-Proxy mit Internet.
+network:
+  allowed: []
+
+permissions:
+  search: low
+
+untrusted: true      # Webseiten sind fremder Text
+offline: false

@@ -1,0 +1,25 @@
+name: browser
+titel: Browser
+url: http://connector-browser:8000/mcp
+dienst: connector-browser
+
+capabilities:
+  - browser.open
+
+# Welche Seiten QuLSI öffnen darf: BROWSER_ALLOWED_DOMAINS in der .env, z. B.
+# "*.wikipedia.org;*.bahn.de". "*" heißt: jede öffentliche Webseite. Adressen im Heimnetz
+# (Router, NAS, Home Assistant) und auf der Box selbst sperrt der Egress-Proxy dabei immer.
+network:
+  allowed_domains: ["${BROWSER_ALLOWED_DOMAINS}"]
+  allowed_ports: [80, 443]
+
+permissions:
+  open: low
+  # nur lesen: keine Formulare, keine Downloads, keine Anmeldungen
+  submit: false
+  download: false
+
+limits: {anfragen_pro_minute: 30, mb_pro_minute: 20}
+
+untrusted: true      # Webseiten sind fremder Text
+offline: false

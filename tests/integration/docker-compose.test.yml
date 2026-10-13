@@ -1,0 +1,53 @@
+# Zusatz für die Integrationstests: Home-Assistant-Ersatz (liefert auch einen ICS-Kalender),
+# Test-Ports und eine Test-Datei für den Dateien-Connector.
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml -f tests/integration/docker-compose.test.yml up -d
+services:
+  fake-ha:
+    image: qulsi-fake-llm
+    command: ["uvicorn", "fake_ha:app", "--host", "0.0.0.0", "--port", "8123", "--app-dir", "/tests"]
+    networks: [internet]       # steht "draußen": nur über den Egress-Proxy erreichbar
+    volumes:
+      - ./tests/integration:/tests:ro
+    ports:
+      - "127.0.0.1:8123:8123"
+  egress:
+    environment:
+      HA_URL: http://fake-ha:8123
+      CALENDAR_ICS_URLS: "Privat=http://fake-ha:8123/kalender.ics"
+      SMTP_HOST: fake-ha
+      SMTP_PORT: "2525"
+      QULSI_PROBE: fake-ha:8123   # "Internet" = fake-ha erreichbar
+      QULSI_EGRESS_EXTRA: "browser=fake-ha:8123"   # fake-ha hat eine private IP, "*" allein ließe es nicht durch
+  connector-home-assistant:
+    environment:
+      HA_URL: http://fake-ha:8123
+  connector-calendar:
+    environment:
+      CALENDAR_ICS_URLS: "Privat=http://fake-ha:8123/kalender.ics"
+      CALENDAR_SYNC_MINUTES: "0.2"
+  connector-files:
+    volumes:
+      - ./data/test-dateien:/data/files:ro   # Kopie von tests/integration/dateien, mit Ordner Hochgeladen
+  connector-mail:
+    environment:
+      SMTP_HOST: fake-ha
+      SMTP_PORT: "2525"
+      MAIL_FROM: anna@example.org
+      SMTP_USER: ""
+      SMTP_STARTTLS: "false"
+  ntfy:
+    environment:
+      NTFY_AUTH_DEFAULT_ACCESS: read-write   # nur im Test: ohne Token lesen und schreiben
+  vision:
+    environment:
+      BLE: "true"
+  core:
+    volumes:
+      - ./data/test-stimme:/stimme   # Stimmprobe im Test, die echte eigene Stimme bleibt unberührt
+      - ./data/test-dateien/Hochgeladen:/data/hochgeladen/dateien   # Hochladen aus der App (Dateien-Connector liest mit)
+    environment:
+      NTFY_OHNE_TOKEN: "1"   # Test-ntfy lässt ohne Token schreiben
+      QULSI_FREIGABE_PIN: "scrypt:00112233445566778899aabbccddeeff:ecaa613317efa69f10b9dcc33fb967709a4273154270a48b701b906ac22d6934"   # PIN 246810 für die App-Freigaben im Test
+  tts:
+    volumes:
+      - ./data/test-stimme:/stimme:ro

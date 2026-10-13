@@ -1,0 +1,14 @@
+# Was neu ist (eine Zeile je Punkt, scripts/paket.sh schreibt das in VERSION und die App)
+Eigene Stimme deutlich schneller: Stimmreferenz wird nur einmal berechnet, Qwen3-TTS rechnet ohne Umwege
+Eigene Stimme klarer: die Stimmprobe wird entrauscht und angeglichen, fehlt der Text, erkennt QuLSI ihn selbst
+Auf RunPod lädt Qwen3-TTS gleich beim Start und bleibt geladen, bis dahin spricht Piper
+Stimme in der App wählen: eigene Stimme oder ein eingebauter Sprecher, wirkt ohne Neustart
+Sprachausgabe schneller: Code-Predictor als CUDA-Graph, neue Stimmprobe ohne Neuladen des Modells
+Chatterbox zum Vergleich: natürlicheres Deutsch, eingebaut oder mit deiner Stimmprobe, unter Einstellungen > Stimme
+Vorlesen ohne Pausen: die Stücke laufen lückenlos hintereinander und werden alle vorab erzeugt
+Qwen3-TTS 1.7B als hochwertige Stimme zur Auswahl
+Die Sprachausgabe hängt nicht mehr: jeder Satz hat eine Obergrenze, nach 20 s spricht Piper, ein hängender Dienst startet neu
+Neue Stimme gilt nach der Freigabe ab dem nächsten Satz, auch wenn der TTS-Dienst gerade beschäftigt war
+Fällt die Sprachausgabe aus, meldet die App das klar statt mit einem Fehler
+Stimmprobe: Aufnahmen, die die App bei 15 Sekunden stoppt, werden angenommen; klare Meldung bei fehlender Aufnahme
+Das Log zeigt je Satz, wie lange die Sprachausgabe gebraucht hat

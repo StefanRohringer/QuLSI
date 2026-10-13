@@ -1,0 +1,5 @@
+# Modelle für Erkennung und Bildvektoren. torch kommt je nach Variante aus dem CUDA- oder CPU-Index.
+ultralytics==8.4.174
+transformers==5.19.0
+# YOLO-World braucht den CLIP-Textencoder
+git+https://github.com/ultralytics/CLIP.git

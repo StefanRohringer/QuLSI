@@ -1,0 +1,10 @@
+# Kameras im Heimnetz anbinden. Vision bekommt dafür das Netz "lan".
+#   docker compose -f docker-compose.yml -f docker-compose.kameras.yml --profile box up -d
+#   KAMERA_NETZ=192.168.1.0/24 sudo scripts/firewall.sh
+# Ohne firewall.sh könnte Vision über "lan" auch ins Internet. Das Skript erlaubt nur
+# die Kamera-Adressen (RTSP/HTTP) und sperrt alles andere.
+services:
+  vision:
+    networks: [zone-ai, zone-agent, edge, lan]
+    environment:
+      DAUERBETRIEB: "true"   # Kameras laufend auswerten

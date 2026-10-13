@@ -1,0 +1,29 @@
+# Model Router: welches Modell beantwortet welche Anfrage.
+# Die Modellnamen sind die Namen aus config/litellm.yaml. Ein Modell tauschen heißt:
+# dort den Eintrag ändern. QuLSI selbst bleibt gleich ("Bonsai ist nicht QuLSI").
+
+modelle:
+  klein: qulsi-klein        # kleines Modell (Qwen3 1.7B) für kurze Befehle mit Werkzeugen
+  standard: bonsai-fast     # Bonsai 27B ohne Denkmodus: Gespräch, Fragen, Werkzeuge
+  gross: bonsai-think       # Bonsai 27B mit Denkmodus: Analyse, Planung
+  vision: bonsai-vision     # Bilder
+
+# 1. Ohne Modell: QuLSI antwortet selbst (Millisekunden statt Sekunden).
+system:
+  uhrzeit: ["wie spät", "wieviel uhr", "wie viel uhr", "uhrzeit"]
+  datum: ["welcher tag ist heute", "welches datum", "der wievielte ist", "welchen tag haben wir"]
+
+# 2. Großes Modell mit Denkmodus. Per Stimme nie (zu langsam), dann Standard.
+gross:
+  stichworte: ["analysier", "plan", "vergleich", "recherchier", "strategie", "bewerte", "begründe",
+               "ausführlich", "zusammenfass", "vor- und nachteile", "pro und contra"]
+  ab_zeichen: 600
+
+# 3. Kleines Modell: kurze Befehle, die meist genau ein Werkzeug brauchen.
+#    Scheitert es (Fehler, leere Antwort), übernimmt automatisch das Standardmodell.
+klein:
+  stichworte: ["schreib", "schick", "erinner", "merk dir", "notier", "schalte", "mach das licht",
+               "licht an", "licht aus", "aufgabe", "füge", "trag ein", "leg an", "privacy"]
+  bis_zeichen: 120
+
+# 4. Alles andere: Standard.

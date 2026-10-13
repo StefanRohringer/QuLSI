@@ -1,0 +1,18 @@
+name: vision
+titel: Kameras
+url: http://connector-vision:8000/mcp
+dienst: connector-vision
+
+capabilities:
+  - camera.capture
+  - vision.analyze
+
+network:
+  allowed: []        # spricht nur mit dem Vision-Dienst im Haus
+
+permissions:
+  capture: low
+  analyze: low
+
+untrusted: false
+offline: true

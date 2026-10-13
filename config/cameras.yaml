@@ -1,0 +1,68 @@
+# Kameras, Zonen und Erkennungsbegriffe für den Perception-Dienst.
+# ${VARIABLE} wird aus der .env ersetzt, damit Passwörter nicht hier stehen.
+
+# Bilder pro Sekunde, die je Kamera angesehen werden (nur bei Bewegung wird erkannt).
+fps: 1
+# Auch ohne Bewegung alle N Sekunden einmal erkennen, damit Sichtungen frisch bleiben.
+auffrischen_sekunden: 600
+# Anteil geänderter Pixel, ab dem ein Bild als "Bewegung" zählt.
+bewegung_schwelle: 0.01
+
+# Begriffe für das Open-Vocabulary-Modell (englisch funktioniert am besten).
+# Links der Begriff für den Detektor, rechts der deutsche Name für Antworten.
+vokabular:
+  keys: Schlüssel
+  wallet: Geldbeutel
+  passport: Reisepass
+  glasses: Brille
+  cell phone: Handy
+  remote control: Fernbedienung
+  cup: Tasse
+  backpack: Rucksack
+  handbag: Tasche
+  laptop: Laptop
+  book: Buch
+
+# Mindest-Sicherheit je Begriff. Open-Vocabulary-Modelle liefern niedrigere Werte als normales YOLO.
+schwelle_standard: 0.15
+schwellen:
+  keys: 0.10
+  wallet: 0.12
+
+# Ab welcher Bildähnlichkeit ein Treffer als dein persönliches Objekt gilt (0..1).
+# Mit SigLIP liegt derselbe Gegenstand meist über 0.85, ähnliche fremde Gegenstände darunter.
+persoenlich_schwelle: 0.82
+
+kameras:
+  - name: kueche
+    url: ${KAMERA_KUECHE_URL}       # z. B. rtsp://user:pass@192.168.1.50:554/stream2 (Substream reicht)
+    raum: Küche
+    zonen:                          # Polygone normiert: 0,0 = oben links, 1,1 = unten rechts
+      - name: Küchentisch
+        polygon: [[0.05, 0.45], [0.65, 0.45], [0.65, 0.98], [0.05, 0.98]]
+      - name: Arbeitsplatte
+        polygon: [[0.65, 0.35], [0.98, 0.35], [0.98, 0.75], [0.65, 0.75]]
+
+  - name: flur
+    url: ${KAMERA_FLUR_URL}
+    raum: Flur
+    zonen:
+      - name: Flurkommode
+        polygon: [[0.2, 0.4], [0.8, 0.4], [0.8, 0.9], [0.2, 0.9]]
+
+  - name: wohnzimmer
+    url: ${KAMERA_WOHNZIMMER_URL}
+    raum: Wohnzimmer
+    zonen:
+      - name: Couchtisch
+        polygon: [[0.25, 0.55], [0.75, 0.55], [0.75, 0.95], [0.25, 0.95]]
+      - name: Sofa
+        polygon: [[0.0, 0.3], [1.0, 0.3], [1.0, 0.55], [0.0, 0.55]]
+
+# Räume, in denen ein ESPresense-Empfänger steht (Bluetooth-Anhänger).
+# Der Raumname muss dem Raum in ESPresense entsprechen (Kleinschreibung egal).
+bluetooth_raeume:
+  kueche: Küche
+  flur: Flur
+  wohnzimmer: Wohnzimmer
+  schlafzimmer: Schlafzimmer

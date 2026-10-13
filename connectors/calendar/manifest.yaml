@@ -1,0 +1,22 @@
+name: calendar
+titel: Kalender
+url: http://connector-calendar:8000/mcp
+dienst: connector-calendar
+
+capabilities:
+  - calendar.search
+  - calendar.create
+  - calendar.sync
+
+network:
+  allowed:
+    - ${CALENDAR_ICS_URLS}   # Hosts der ICS-Links aus der .env (Google, iCloud, Nextcloud, ...)
+
+permissions:
+  search: low
+  sync: low
+  create: medium
+
+untrusted: false
+# Termine liegen als Cache in Postgres: Suchen und Anlegen gehen auch ohne Internet.
+offline: [calendar.search, calendar.create]
